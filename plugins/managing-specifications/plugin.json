@@ -2,7 +2,9 @@
   "name": "managing-specifications",
   "version": "1.0.0",
   "description": "Manages specification-driven development with spec-kit and OpenSpec. Provides workflows for greenfield, brownfield, and legacy projects.",
-  "author": "eadydb",
+  "author": {
+    "name": "eadydb"
+  },
   "license": "MIT",
   "homepage": "https://github.com/eadydb/plugins",
   "repository": "https://github.com/eadydb/plugins",
