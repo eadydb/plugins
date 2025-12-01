@@ -5,7 +5,7 @@
 # ///
 """
 Analyze existing codebase and generate project context for AI assistance
-Usage: uv run scripts/analyze-project-context.py [--output-file .claude/project-context.json]
+Usage: uv run scripts/analyze-project-context.py [--output-file .claude/project-context.json] [--generate-specs]
 """
 
 import sys
@@ -153,15 +153,165 @@ def scan_existing_docs(root_path):
 
     return docs
 
-def generate_baseline_specs(analysis, output_dir):
-    """Generate baseline SDD specifications"""
+def load_template(template_name):
+    """Load a template file"""
+    script_dir = Path(__file__).parent
+    template_path = script_dir.parent / 'templates' / template_name
+
+    if not template_path.exists():
+        # Fallback to simple template if file not found
+        return None
+
+    with open(template_path, 'r') as f:
+        return f.read()
+
+def extract_readme_content(root_path):
+    """Extract content from README.md"""
+    readme_path = root_path / 'README.md'
+    if readme_path.exists():
+        try:
+            content = readme_path.read_text(encoding='utf-8')
+            # Extract first paragraph or first 500 characters
+            lines = content.split('\n')
+            description_lines = []
+            for line in lines:
+                if line.strip() and not line.startswith('#'):
+                    description_lines.append(line)
+                    if len('\n'.join(description_lines)) > 500:
+                        break
+            return '\n'.join(description_lines[:3]) if description_lines else "No description available"
+        except Exception:
+            pass
+    return "No description available"
+
+def infer_architecture_pattern(structure):
+    """Infer architecture pattern from directory structure"""
+    source_dirs = structure.get('source_dirs', [])
+
+    patterns = []
+    if any('model' in d.lower() for d in source_dirs):
+        patterns.append("可能使用 MVC 或分层架构")
+    if any('controller' in d.lower() for d in source_dirs):
+        patterns.append("检测到 Controller 层")
+    if any('service' in d.lower() for d in source_dirs):
+        patterns.append("检测到 Service 层")
+    if any('repository' in d.lower() or 'dao' in d.lower() for d in source_dirs):
+        patterns.append("检测到 Repository/DAO 层")
+
+    if patterns:
+        return '\n'.join(f"- {p}" for p in patterns)
+    return "- [待分析] 请根据代码结构补充架构模式"
+
+def format_tech_stack(project_types, dependencies):
+    """Format detected technologies"""
+    lines = []
+    for tech in project_types:
+        lines.append(f"- **{tech.title()}**")
+
+    # Add framework hints from dependencies
+    frameworks = {
+        'package.json': 'Node.js ecosystem',
+        'requirements.txt': 'Python packages',
+        'go.mod': 'Go modules',
+        'Cargo.toml': 'Rust crates'
+    }
+
+    for dep_file in dependencies.keys():
+        if dep_file in frameworks:
+            lines.append(f"  - {frameworks[dep_file]}: `{dep_file}`")
+
+    return '\n'.join(lines) if lines else "- [待检测] 请补充技术栈信息"
+
+def format_directory_tree(structure):
+    """Format directory structure as a tree"""
+    lines = []
+    for category, dirs in structure.items():
+        if dirs:
+            category_name = category.replace('_', ' ').title()
+            lines.append(f"{category_name}:")
+            for d in dirs:
+                lines.append(f"  {d}/")
+    return '\n'.join(lines) if lines else "[待扫描] 项目目录结构"
+
+def format_api_endpoints(endpoints):
+    """Format API endpoints"""
+    if not endpoints:
+        return "[未检测到] 请补充 API 端点信息"
+
+    lines = ["**检测到的路由文件**:"]
+    for endpoint in endpoints[:10]:  # Limit to first 10
+        lines.append(f"- `{endpoint['file']}`")
+
+    if len(endpoints) > 10:
+        lines.append(f"- ... 以及其他 {len(endpoints) - 10} 个文件")
+
+    return '\n'.join(lines)
+
+def format_database_schemas(schemas):
+    """Format database schema files"""
+    if not schemas:
+        return "[未检测到] 请补充数据库设计信息"
+
+    lines = ["**检测到的 Schema 文件**:"]
+    for schema in schemas[:5]:
+        lines.append(f"- `{schema}`")
+
+    if len(schemas) > 5:
+        lines.append(f"- ... 以及其他 {len(schemas) - 5} 个文件")
+
+    return '\n'.join(lines)
+
+def format_system_components(structure):
+    """Format system components"""
+    source_dirs = structure.get('source_dirs', [])
+    if not source_dirs:
+        return "[待识别] 请补充系统组件说明"
+
+    lines = []
+    for src_dir in source_dirs:
+        lines.append(f"- **`{src_dir}/`**: [TODO] 补充组件职责说明")
+
+    return '\n'.join(lines)
+
+def generate_baseline_specs(analysis, output_dir, root_path):
+    """Generate baseline SDD specifications using templates"""
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # Generate project.md
-    project_md = output_path / 'project.md'
-    with open(project_md, 'w') as f:
-        f.write(f"""# Project Overview
+    # Extract project name from directory
+    project_name = root_path.name.replace('-', ' ').replace('_', ' ').title()
+    project_description = extract_readme_content(root_path)
+
+    # Prepare template variables
+    template_vars = {
+        'PROJECT_NAME': project_name,
+        'PROJECT_DESCRIPTION': project_description,
+        'DETECTED_TECHNOLOGIES': format_tech_stack(analysis['project_types'], analysis['dependencies']),
+        'PROJECT_STRUCTURE': format_directory_tree(analysis['structure']),
+        'API_ENDPOINTS': format_api_endpoints(analysis['api_endpoints']),
+        'DATABASE_SCHEMA': format_database_schemas(analysis['database_schemas']),
+        'ARCHITECTURE_OVERVIEW': infer_architecture_pattern(analysis['structure']),
+        'SYSTEM_COMPONENTS': format_system_components(analysis['structure']),
+        'TECH_STACK_DETAILS': format_tech_stack(analysis['project_types'], analysis['dependencies']),
+        'DATA_STORAGE': format_database_schemas(analysis['database_schemas']),
+        'SECURITY_CONSIDERATIONS': "- [TODO] 补充认证授权机制\n- [TODO] 补充数据加密策略\n- [TODO] 补充安全审计方案"
+    }
+
+    # Generate project.md from template
+    project_template = load_template('project.md.template')
+    if project_template:
+        project_content = project_template
+        for key, value in template_vars.items():
+            project_content = project_content.replace('{' + key + '}', value)
+
+        project_md = output_path / 'project.md'
+        with open(project_md, 'w') as f:
+            f.write(project_content)
+    else:
+        # Fallback to simple generation
+        project_md = output_path / 'project.md'
+        with open(project_md, 'w') as f:
+            f.write(f"""# {project_name}
 
 > Auto-generated baseline specification from legacy codebase analysis
 > Date: {__import__('datetime').datetime.now().strftime('%Y-%m-%d')}
@@ -176,116 +326,42 @@ Detected technologies: {', '.join(analysis['project_types'])}
 
 """)
 
-        for category, dirs in analysis['structure'].items():
-            if dirs:
-                f.write(f"**{category.replace('_', ' ').title()}**: {', '.join(dirs)}\n")
+            for category, dirs in analysis['structure'].items():
+                if dirs:
+                    f.write(f"**{category.replace('_', ' ').title()}**: {', '.join(dirs)}\n")
 
-        f.write(f"""
+    # Generate architecture.md from template
+    arch_template = load_template('architecture.md.template')
+    if arch_template:
+        arch_content = arch_template
+        for key, value in template_vars.items():
+            arch_content = arch_content.replace('{' + key + '}', value)
 
-### Dependencies
-
-""")
-        for dep_file, location in analysis['dependencies'].items():
-            f.write(f"- `{dep_file}`: {location}\n")
-
-        f.write(f"""
-
-## Existing Documentation
-
-""")
-        if analysis['existing_docs']:
-            for doc in analysis['existing_docs']:
-                f.write(f"- `{doc['file']}` ({doc['size']} bytes)\n")
-        else:
-            f.write("No existing documentation found.\n")
-
-        f.write(f"""
-
-## Next Steps
-
-1. Review this baseline specification
-2. Refine with business context and requirements
-3. Document key features in `features/` directory
-4. Add architecture decisions to `architecture.md`
-5. Begin using OpenSpec for new changes
-
-""")
-
-    # Generate architecture.md
-    arch_md = output_path / 'architecture.md'
-    with open(arch_md, 'w') as f:
-        f.write(f"""# System Architecture
+        arch_md = output_path / 'architecture.md'
+        with open(arch_md, 'w') as f:
+            f.write(arch_content)
+    else:
+        # Fallback to simple generation
+        arch_md = output_path / 'architecture.md'
+        with open(arch_md, 'w') as f:
+            f.write(f"""# System Architecture
 
 > Auto-generated baseline - requires manual refinement
 
 ## Technology Stack
 
-""")
-        for tech in analysis['project_types']:
-            f.write(f"- {tech.title()}\n")
-
-        f.write(f"""
+{template_vars['TECH_STACK_DETAILS']}
 
 ## Components
 
-### Source Code Structure
-
-""")
-        for src_dir in analysis['structure']['source_dirs']:
-            f.write(f"- `{src_dir}/`: [TODO: Describe component purpose]\n")
-
-        if analysis['api_endpoints']:
-            f.write(f"""
-
-### API Endpoints
-
-Found {len(analysis['api_endpoints'])} potential API route files:
-
-""")
-            for endpoint in analysis['api_endpoints'][:5]:  # Limit to first 5
-                f.write(f"- `{endpoint['file']}`\n")
-
-            if len(analysis['api_endpoints']) > 5:
-                f.write(f"- ... and {len(analysis['api_endpoints']) - 5} more\n")
-
-            f.write("\n**TODO**: Document actual endpoints, methods, and parameters\n")
-
-        if analysis['database_schemas']:
-            f.write(f"""
-
-### Database
-
-Schema files found:
-
-""")
-            for schema in analysis['database_schemas']:
-                f.write(f"- `{schema}`\n")
-
-            f.write("\n**TODO**: Document data model and relationships\n")
-
-        f.write(f"""
+{template_vars['SYSTEM_COMPONENTS']}
 
 ## Design Patterns
 
-**TODO**: Document architectural patterns used:
-- [ ] MVC / MVVM / Clean Architecture
-- [ ] Dependency Injection
-- [ ] Repository Pattern
-- [ ] Service Layer
-- [ ] API Gateway
-- [ ] Microservices / Monolith
-
-## Infrastructure
-
-**TODO**: Document deployment and infrastructure:
-- [ ] Hosting platform
-- [ ] CI/CD pipeline
-- [ ] Monitoring and logging
-- [ ] Scalability approach
-
+[TODO] 补充架构模式
 """)
 
-    # Create features directory
+    # Create features directory with README
     features_dir = output_path / 'features'
     features_dir.mkdir(exist_ok=True)
 
@@ -293,44 +369,45 @@ Schema files found:
     with open(readme, 'w') as f:
         f.write("""# Features
 
-Document each major feature of the system in separate markdown files.
+此目录用于记录系统的各个功能特性。
 
-## Template
+## 使用方法
 
-Create a file for each feature (e.g., `user-authentication.md`):
-````markdown
-# [Feature Name]
+为每个主要功能创建一个独立的 Markdown 文件，例如 `user-authentication.md`。
 
-## Purpose
-What problem does this feature solve?
+可以使用 `../templates/feature.md.template` 作为模板。
 
-## User Stories
-- As a [user type], I want to [action] so that [benefit]
+## 下一步
 
-## Functionality
-Detailed description of what the feature does
+1. 识别系统的核心功能模块
+2. 为每个功能创建对应的文档文件
+3. 与团队协作完善功能描述
 
-## API/Interface
-How users/systems interact with this feature
+---
 
-## Dependencies
-What this feature depends on
-
-## Technical Notes
-Implementation details worth documenting
-````
-
-## Next Steps
-
-1. Identify core features from codebase
-2. Create a file for each feature
-3. Collaborate with team to document accurately
+*提示：可以让 Claude 帮助你识别和记录功能特性*
 """)
+
+    # Save generation metadata
+    metadata = {
+        'generated_at': __import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'analysis_summary': {
+            'project_types': analysis['project_types'],
+            'api_endpoints_count': len(analysis['api_endpoints']),
+            'database_schemas_count': len(analysis['database_schemas']),
+            'documentation_count': len(analysis['existing_docs'])
+        }
+    }
+
+    metadata_file = output_path / '.analysis-metadata.json'
+    with open(metadata_file, 'w') as f:
+        json.dump(metadata, f, indent=2)
 
     return {
         'project_md': str(project_md),
         'architecture_md': str(arch_md),
-        'features_dir': str(features_dir)
+        'features_dir': str(features_dir),
+        'metadata': str(metadata_file)
     }
 
 def main():
@@ -346,6 +423,11 @@ def main():
         '--project-root',
         default='.',
         help='Project root directory (default: current directory)'
+    )
+    parser.add_argument(
+        '--generate-specs',
+        action='store_true',
+        help='Generate baseline OpenSpec specifications from analysis'
     )
 
     args = parser.parse_args()
@@ -410,19 +492,46 @@ def main():
 
     print(f"\n✅ 项目上下文已保存到: {output_path}")
 
-    print("\n" + "="*60)
-    print("下一步：使用 AI 生成规范")
-    print("="*60)
-    print("\n在 Claude Code 中运行以下命令之一：")
-    print("\n1️⃣  填充项目上下文（推荐）：")
-    print('   "Please read openspec/project.md and help me fill it out')
-    print('    with details about my project, tech stack, and conventions"')
-    print("\n2️⃣  让 Claude 参考上下文创建规范：")
-    print(f'   "Please read {output_path} for project analysis,')
-    print('    then help me create comprehensive OpenSpec documentation"')
-    print("\n3️⃣  创建功能提案：")
-    print('   "I want to add [YOUR FEATURE]. Please create an')
-    print('    OpenSpec change proposal for this feature"')
+    # Generate baseline specs if requested
+    if args.generate_specs:
+        print("\n7. 生成基准规范文件...")
+        specs_dir = root_path / 'openspec' / 'specs'
+        generated_files = generate_baseline_specs(analysis, specs_dir, root_path)
+
+        print("   ✅ 已生成基准规范文件：")
+        print(f"      - {generated_files['project_md']}")
+        print(f"      - {generated_files['architecture_md']}")
+        print(f"      - {generated_files['features_dir']}/")
+        print(f"      - {generated_files['metadata']}")
+
+        print("\n" + "="*60)
+        print("✨ 基准规范生成完成")
+        print("="*60)
+        print("\n📝 生成的规范文件包含从代码分析得出的基础信息")
+        print("🔧 请在 Claude Code 中完善标记为 [TODO] 的部分\n")
+        print("建议的后续步骤：")
+        print("\n1️⃣  在 Claude Code 中完善规范：")
+        print('   "Please read openspec/specs/project.md and help me')
+        print('    complete all [TODO] sections with proper details"')
+        print("\n2️⃣  记录核心功能：")
+        print('   "Help me identify and document the core features')
+        print('    in openspec/specs/features/"')
+        print("\n3️⃣  创建第一个变更提案：")
+        print('   "I want to add [FEATURE]. Please create an')
+        print('    OpenSpec change proposal"')
+    else:
+        print("\n" + "="*60)
+        print("下一步：生成基准规范或使用 AI 协作")
+        print("="*60)
+        print("\n💡 提示：添加 --generate-specs 参数可自动生成基准规范文件")
+        print("\n在 Claude Code 中运行以下命令之一：")
+        print("\n1️⃣  让 Claude 读取分析结果：")
+        print(f'   "Please read {output_path} and help me')
+        print('    create OpenSpec documentation for this project"')
+        print("\n2️⃣  创建功能提案：")
+        print('   "I want to add [YOUR FEATURE]. Please create an')
+        print('    OpenSpec change proposal for this feature"')
+
     print("\n📚 参考文档: reference/legacy-adoption.md")
     print("="*60)
 

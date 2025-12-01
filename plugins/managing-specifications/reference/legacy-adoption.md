@@ -37,8 +37,11 @@ bash scripts/adopt-sdd.sh
 This will automatically:
 1. Detect your project as "legacy"
 2. Install and initialize OpenSpec (if needed)
-3. Analyze your codebase and generate project context
-4. Guide you through the next steps in Claude Code
+3. **Analyze your codebase and generate baseline specifications** (New in v1.1.0)
+   - `openspec/specs/project.md` - 项目概述（含 TODO）
+   - `openspec/specs/architecture.md` - 架构文档（含 TODO）
+   - `openspec/specs/features/` - 功能目录
+4. Guide you through refining the specifications in Claude Code
 
 ## Manual Step-by-Step
 
@@ -52,16 +55,19 @@ npm install -g @fission-ai/openspec@latest
 openspec init
 ```
 
-### Step 2: Analyze Project Context
+### Step 2: Analyze and Generate Baseline Specs
 
 ```bash
-# Generate project analysis for AI
-uv run scripts/analyze-project-context.py
+# Generate project analysis and baseline specifications
+uv run scripts/analyze-project-context.py --generate-specs
 ```
 
 This scans your codebase and generates:
 
 - `.claude/project-context.json` - Structured project analysis for AI
+- `openspec/specs/project.md` - Project overview with TODO markers
+- `openspec/specs/architecture.md` - Architecture documentation with TODO markers
+- `openspec/specs/features/` - Features directory with README
 
 ### What gets analyzed
 
@@ -72,19 +78,31 @@ This scans your codebase and generates:
 - **Dependencies**: Package managers and dependency files
 - **Existing docs**: README, architecture docs, API docs
 
-### Review generated specs
+### Step 3: Review Generated Specs
 
-The auto-generated specs are **starting points**, not complete documentation:
+The auto-generated specs are **starting points** with intelligent defaults:
 
 ```bash
-# Read generated overview
+# Read generated project overview
 cat openspec/specs/project.md
 
-# Review architecture baseline
+# Review architecture documentation
 cat openspec/specs/architecture.md
 ```
 
-Look for `[TODO]` markers - these indicate areas needing manual refinement.
+**What's automatically populated**:
+- Project type and detected technologies
+- Directory structure
+- API endpoints (pattern-based detection)
+- Database schema files
+- Architecture patterns inferred from code structure
+
+**What needs refinement** (marked with `[TODO]`):
+- Business context and value proposition
+- Technology selection rationale
+- Architecture decision records
+- Core feature descriptions
+- Development conventions
 
 ## Phase 2: Refinement
 

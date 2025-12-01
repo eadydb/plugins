@@ -1,5 +1,11 @@
 #!/bin/bash
 # Detect project phase: greenfield (0→1), brownfield (1→N), or legacy (existing without SDD)
+#
+# Detection logic:
+# - greenfield: 无代码 + 无规范 → spec-kit (0→1)
+# - legacy:     有代码 + 无规范 → 分析 + OpenSpec (先分析生成基准规范)
+# - brownfield: 有代码 + 有规范 → OpenSpec (功能迭代和变更管理)
+# - spec-kit-only: 有 spec-kit → 考虑迁移到 OpenSpec
 
 set -e
 
@@ -7,11 +13,56 @@ HAS_SOURCE=false
 HAS_SPEC_KIT=false
 HAS_OPENSPEC=false
 
-# Check for source code in common locations
+# Step 1: Check for source code indicators (fast check)
+# Common project structure directories and configuration files
 if [ -d "src" ] || [ -d "app" ] || [ -d "lib" ] || [ -d "pkg" ] || \
+   [ -d "plugins" ] || [ -d "components" ] || [ -d "scripts" ] || \
    [ -f "package.json" ] || [ -f "setup.py" ] || [ -f "go.mod" ] || \
-   [ -f "Cargo.toml" ] || [ -f "pom.xml" ]; then
+   [ -f "Cargo.toml" ] || [ -f "pom.xml" ] || [ -f "pyproject.toml" ]; then
     HAS_SOURCE=true
+fi
+
+# Step 2: Language-agnostic code detection using Git (fastest and most reliable)
+# For git repositories: check if there are any non-documentation files
+if [ "$HAS_SOURCE" = false ] && [ -d ".git" ]; then
+    # Exclude documentation and config files, include everything else
+    # This works for ANY programming language without hardcoding extensions
+    TRACKED_FILES=$(git ls-files 2>/dev/null | \
+        grep -v -E '\.(md|txt|json|yaml|yml|toml|xml|lock|svg|png|jpg|jpeg|gif|ico|pdf)$' | \
+        grep -v -E '^(LICENSE|README|CHANGELOG|\.gitignore|\.gitattributes)' | \
+        head -1)
+    if [ -n "$TRACKED_FILES" ]; then
+        HAS_SOURCE=true
+    fi
+fi
+
+# Step 3: Fallback for non-git projects
+# Simply check if there are any files that are NOT common documentation/config files
+if [ "$HAS_SOURCE" = false ]; then
+    # Count all files, excluding common non-code patterns
+    NON_DOC_FILES=$(find . -type f \
+        ! -path "*/node_modules/*" \
+        ! -path "*/.git/*" \
+        ! -path "*/venv/*" \
+        ! -path "*/.venv/*" \
+        ! -path "*/env/*" \
+        ! -path "*/build/*" \
+        ! -path "*/dist/*" \
+        ! -path "*/target/*" \
+        ! -path "*/__pycache__/*" \
+        ! -path "*/.pytest_cache/*" \
+        ! -path "*/vendor/*" \
+        ! -name "*.md" \
+        ! -name "*.txt" \
+        ! -name "LICENSE*" \
+        ! -name "README*" \
+        ! -name "CHANGELOG*" \
+        ! -name ".gitignore" \
+        2>/dev/null | head -1)
+
+    if [ -n "$NON_DOC_FILES" ]; then
+        HAS_SOURCE=true
+    fi
 fi
 
 # Check for existing spec frameworks

@@ -9,4 +9,6 @@
 *.sln
 *.sw?
 
+# Claude Code settings and credentials
+.claude/
 settings.local.json

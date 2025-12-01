@@ -67,9 +67,9 @@ case $PHASE in
             echo "   ✓ OpenSpec 已初始化"
         fi
 
-        # Step 3: Analyze project (legacy only)
+        # Step 3: Analyze project and generate baseline specs (legacy only)
         if [ "$PHASE" = "legacy" ]; then
-            echo -e "\n🔍 步骤 3/4: 分析项目代码..."
+            echo -e "\n🔍 步骤 3/4: 分析项目并生成基准规范..."
 
             # Check if uv is installed (for running Python scripts)
             if ! command -v uv &> /dev/null; then
@@ -78,30 +78,54 @@ case $PHASE in
                 export PATH="$HOME/.cargo/bin:$PATH"
             fi
 
-            uv run "$SCRIPT_DIR/analyze-project-context.py"
-            echo "   ✅ 项目上下文已生成: .claude/project-context.json"
+            # Run analysis with --generate-specs flag
+            uv run "$SCRIPT_DIR/analyze-project-context.py" --generate-specs
+
+            echo ""
+            echo "   ✅ 已生成基准规范文件："
+            echo "      - openspec/specs/project.md"
+            echo "      - openspec/specs/architecture.md"
+            echo "      - openspec/specs/features/"
+            echo ""
+            echo "   ✅ 项目上下文已保存: .claude/project-context.json"
         fi
 
         # Step 4: Guide for completing setup in Claude Code
         echo -e "\n🤖 步骤 4/4: 在 Claude Code 中完成设置"
         echo ""
-        echo "   OpenSpec 已初始化！请在 Claude Code 中依次运行以下命令："
-        echo ""
-        echo "   1️⃣  填充项目上下文："
-        echo "   \"Please read openspec/project.md and help me fill it out"
-        echo "    with details about my project, tech stack, and conventions\""
-        echo ""
-        echo "   2️⃣  创建第一个变更提案（可选）："
-        echo "   \"I want to add [YOUR FEATURE HERE]. Please create an"
-        echo "    OpenSpec change proposal for this feature\""
-        echo ""
-        echo "   3️⃣  学习 OpenSpec 工作流："
-        echo "   \"Please explain the OpenSpec workflow from openspec/AGENTS.md"
-        echo "    and how I should work with you on this project\""
-        echo ""
         if [ "$PHASE" = "legacy" ]; then
-            echo "   💡 提示：项目分析数据已保存在 .claude/project-context.json"
-            echo "   您可以让 Claude 参考这个文件来更好地理解您的项目"
+            echo "   OpenSpec 已初始化并生成基准规范！"
+            echo ""
+            echo "   📝 基准规范文件已包含从代码分析得出的基础信息"
+            echo "   🔧 请在 Claude Code 中完善标记为 [TODO] 的部分"
+            echo ""
+            echo "   建议在 Claude Code 中依次运行以下命令："
+            echo ""
+            echo "   1️⃣  完善项目规范："
+            echo "   \"Please read openspec/specs/project.md and help me"
+            echo "    complete all [TODO] sections with proper details\""
+            echo ""
+            echo "   2️⃣  记录核心功能："
+            echo "   \"Help me identify and document the core features"
+            echo "    in openspec/specs/features/\""
+            echo ""
+            echo "   3️⃣  创建第一个变更提案："
+            echo "   \"I want to add [YOUR FEATURE]. Please create an"
+            echo "    OpenSpec change proposal for this feature\""
+        else
+            echo "   OpenSpec 已初始化！请在 Claude Code 中依次运行以下命令："
+            echo ""
+            echo "   1️⃣  填充项目上下文："
+            echo "   \"Please read openspec/specs/project.md and help me fill it out"
+            echo "    with details about my project, tech stack, and conventions\""
+            echo ""
+            echo "   2️⃣  创建第一个变更提案（可选）："
+            echo "   \"I want to add [YOUR FEATURE HERE]. Please create an"
+            echo "    OpenSpec change proposal for this feature\""
+            echo ""
+            echo "   3️⃣  学习 OpenSpec 工作流："
+            echo "   \"Please explain the OpenSpec workflow"
+            echo "    and how I should work with you on this project\""
         fi
         ;;
 

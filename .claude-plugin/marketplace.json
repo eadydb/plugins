@@ -13,8 +13,8 @@
     {
       "name": "managing-specifications",
       "source": "./plugins/managing-specifications",
-      "description": "Specification-driven development workflow with spec-kit and OpenSpec support",
-      "version": "1.0.0",
+      "description": "Intelligent SDD workflow with automatic phase detection and baseline spec generation",
+      "version": "1.1.0",
       "author": {
         "name": "eadydb"
       },
