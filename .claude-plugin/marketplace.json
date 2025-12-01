@@ -1,0 +1,24 @@
+{
+  "name": "dev-workflow-tools",
+  "owner": {
+    "name": "eadydb",
+    "email": "eadydb@users.noreply.github.com"
+  },
+  "description": "Essential development workflow tools including specification-driven development, code quality management, and project automation utilities",
+  "version": "1.0.0",
+  "homepage": "https://github.com/eadydb/plugins",
+  "repository": "https://github.com/eadydb/plugins",
+  "license": "MIT",
+  "plugins": [
+    {
+      "name": "managing-specifications",
+      "source": "./plugins/managing-specifications",
+      "description": "Specification-driven development workflow with spec-kit and OpenSpec support",
+      "version": "1.0.0",
+      "author": "eadydb",
+      "license": "MIT",
+      "keywords": ["specifications", "spec-kit", "openspec", "sdd", "workflow"],
+      "category": "Development Workflow"
+    }
+  ]
+}

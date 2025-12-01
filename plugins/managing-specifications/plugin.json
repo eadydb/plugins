@@ -1,0 +1,32 @@
+{
+  "name": "managing-specifications",
+  "version": "1.0.0",
+  "description": "Manages specification-driven development with spec-kit and OpenSpec. Provides workflows for greenfield, brownfield, and legacy projects.",
+  "author": "eadydb",
+  "license": "MIT",
+  "homepage": "https://github.com/eadydb/plugins",
+  "repository": "https://github.com/eadydb/plugins",
+  "keywords": [
+    "specifications",
+    "spec-kit",
+    "openspec",
+    "sdd",
+    "workflow",
+    "development"
+  ],
+  "skills": [
+    {
+      "name": "managing-specifications",
+      "description": "Specification-driven development workflow management",
+      "path": "SKILL.md"
+    }
+  ],
+  "scripts": {
+    "validate": "uv run scripts/validate-spec.py",
+    "analyze": "uv run scripts/analyze-legacy-project.py",
+    "detect-phase": "bash scripts/detect-phase.sh"
+  },
+  "dependencies": {
+    "uv": ">=0.1.0"
+  }
+}
