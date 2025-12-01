@@ -19,27 +19,49 @@ For existing projects that want to adopt Specification-Driven Development (SDD) 
 
 ## Overview
 
-Legacy adoption follows a 3-phase approach:
+Legacy adoption follows a streamlined 3-step approach:
 
-1. **Analyze**: Generate baseline specifications from existing code
-2. **Refine**: Collaborate to enhance and complete specifications
-3. **Adopt**: Use OpenSpec for ongoing development
+1. **Initialize**: Use one-command adoption to set up OpenSpec
+2. **Analyze**: Generate project context for AI assistance
+3. **Collaborate**: Work with AI to create comprehensive specs
 
-## Phase 1: Analysis
+## Quick Start (Recommended)
 
-### Run automated analysis
+### One-Command Adoption
 
 ```bash
 # From project root
-uv run scripts/analyze-legacy-project.py
+bash scripts/adopt-sdd.sh
+```
+
+This will automatically:
+1. Detect your project as "legacy"
+2. Install and initialize OpenSpec (if needed)
+3. Analyze your codebase and generate project context
+4. Guide you through the next steps in Claude Code
+
+## Manual Step-by-Step
+
+### Step 1: Initialize OpenSpec
+
+```bash
+# Install OpenSpec (if not already installed)
+npm install -g @fission-ai/openspec@latest
+
+# Initialize in your project
+openspec init
+```
+
+### Step 2: Analyze Project Context
+
+```bash
+# Generate project analysis for AI
+uv run scripts/analyze-project-context.py
 ```
 
 This scans your codebase and generates:
 
-- `openspec/specs/project.md` - Project overview
-- `openspec/specs/architecture.md` - System architecture
-- `openspec/specs/features/` - Directory for feature documentation
-- `openspec/specs/analysis-report.json` - Detailed analysis data
+- `.claude/project-context.json` - Structured project analysis for AI
 
 ### What gets analyzed
 

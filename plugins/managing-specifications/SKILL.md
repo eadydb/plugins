@@ -17,7 +17,19 @@ Guides specification-driven development (SDD) by selecting the appropriate frame
 
 ## Quick Start
 
-Detect project phase first:
+One-command adoption (recommended):
+
+```bash
+bash scripts/adopt-sdd.sh
+```
+
+This will automatically:
+1. Detect your project phase
+2. Initialize the appropriate framework (spec-kit or OpenSpec)
+3. For legacy projects: analyze code and generate context
+4. Guide you through the next steps
+
+Or detect project phase manually:
 
 ```bash
 bash scripts/detect-phase.sh
@@ -27,15 +39,17 @@ bash scripts/detect-phase.sh
 |--------|---------|--------|
 | greenfield | No code, no specs | Use spec-kit → `reference/spec-kit-workflow.md` |
 | brownfield | Has code + specs | Use OpenSpec → `reference/openspec-workflow.md` |
-| legacy | Has code, no specs | Analyze first → `reference/legacy-adoption.md` |
+| legacy | Has code, no specs | Use adopt-sdd.sh → `reference/legacy-adoption.md` |
 | spec-kit-only | Has spec-kit, needs OpenSpec | Migrate → `reference/migration-guide.md` |
 
 ## Scripts
 
 | Script | Purpose |
 |--------|---------|
+| `scripts/adopt-sdd.sh` | **One-command SDD adoption** (recommended) |
+| `scripts/smart-init.sh` | Smart initialization wrapper for frameworks |
 | `scripts/detect-phase.sh` | Detect project state (greenfield/brownfield/legacy) |
-| `scripts/analyze-legacy-project.py` | Generate baseline specs from existing code |
+| `scripts/analyze-project-context.py` | Generate project context for AI (legacy projects) |
 | `scripts/migrate-to-openspec.sh` | Migrate from spec-kit to OpenSpec |
 | `scripts/validate-spec.py` | Validate specification completeness |
 
@@ -43,7 +57,13 @@ bash scripts/detect-phase.sh
 
 **Example**:
 ```bash
-uv run scripts/analyze-legacy-project.py --output-dir openspec/specs
+# Recommended: one-command adoption
+bash scripts/adopt-sdd.sh
+
+# Or analyze project context separately
+uv run scripts/analyze-project-context.py
+
+# Validate specifications
 uv run scripts/validate-spec.py specs/001-feature/spec.md
 ```
 

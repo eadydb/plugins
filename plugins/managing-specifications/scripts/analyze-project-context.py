@@ -4,8 +4,8 @@
 # requires-python = ">=3.8"
 # ///
 """
-Analyze existing codebase and generate baseline SDD specifications
-Usage: uv run scripts/analyze-legacy-project.py [--output-dir openspec/specs]
+Analyze existing codebase and generate project context for AI assistance
+Usage: uv run scripts/analyze-project-context.py [--output-file .claude/project-context.json]
 """
 
 import sys
@@ -335,12 +335,12 @@ Implementation details worth documenting
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Analyze legacy project and generate baseline SDD specs'
+        description='Analyze project and generate context for AI assistance'
     )
     parser.add_argument(
-        '--output-dir',
-        default='openspec/specs',
-        help='Output directory for generated specs (default: openspec/specs)'
+        '--output-file',
+        default='.claude/project-context.json',
+        help='Output file for project context (default: .claude/project-context.json)'
     )
     parser.add_argument(
         '--project-root',
@@ -356,33 +356,43 @@ def main():
         print(f"Error: Project root not found: {root_path}")
         sys.exit(1)
 
-    print("=== Analyzing Legacy Project ===\n")
+    # Check if OpenSpec is initialized
+    if not (root_path / 'openspec').exists():
+        print("⚠️  项目尚未初始化 OpenSpec")
+        print("\n请先运行初始化命令：")
+        print("  bash scripts/adopt-sdd.sh")
+        print("\n或手动初始化：")
+        print("  npm install -g @fission-ai/openspec@latest && openspec init")
+        sys.exit(1)
+
+    print("=== 分析项目上下文 ===\n")
 
     # Perform analysis
-    print("1. Detecting project type...")
+    print("1. 检测项目类型...")
     project_types = detect_project_type(root_path)
-    print(f"   Found: {', '.join(project_types) if project_types else 'Unknown'}")
+    print(f"   发现: {', '.join(project_types) if project_types else 'Unknown'}")
 
-    print("2. Analyzing directory structure...")
+    print("2. 分析目录结构...")
     structure = analyze_directory_structure(root_path)
 
-    print("3. Finding API endpoints...")
+    print("3. 查找 API 模式...")
     api_endpoints = find_api_endpoints(root_path)
-    print(f"   Found {len(api_endpoints)} potential route files")
+    print(f"   发现 {len(api_endpoints)} 个潜在的路由文件")
 
-    print("4. Locating database schemas...")
+    print("4. 定位数据库模式...")
     schemas = find_database_schemas(root_path)
-    print(f"   Found {len(schemas)} schema files")
+    print(f"   发现 {len(schemas)} 个模式文件")
 
-    print("5. Extracting dependencies...")
+    print("5. 提取依赖...")
     dependencies = extract_dependencies(root_path, project_types)
 
-    print("6. Scanning existing documentation...")
+    print("6. 扫描现有文档...")
     existing_docs = scan_existing_docs(root_path)
-    print(f"   Found {len(existing_docs)} documentation files")
+    print(f"   发现 {len(existing_docs)} 个文档文件")
 
     # Compile analysis
     analysis = {
+        'analysis_date': __import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'project_types': project_types,
         'structure': structure,
         'api_endpoints': api_endpoints,
@@ -391,30 +401,30 @@ def main():
         'existing_docs': existing_docs
     }
 
-    # Generate specifications
-    print(f"\n7. Generating baseline specifications in {args.output_dir}...")
-    generated = generate_baseline_specs(analysis, args.output_dir)
+    # Save context file
+    output_path = Path(args.output_file)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    print("\n=== Analysis Complete ===\n")
-    print("Generated files:")
-    for key, path in generated.items():
-        print(f"  ✓ {path}")
-
-    print("\n" + "="*50)
-    print("NEXT STEPS:")
-    print("="*50)
-    print("1. Review and refine generated specifications")
-    print("2. Add business context and requirements")
-    print("3. Document features in openspec/specs/features/")
-    print("4. Initialize OpenSpec: openspec init")
-    print("5. Start using OpenSpec for new changes")
-    print("\nSee reference/legacy-adoption.md for detailed guide")
-
-    # Save analysis report
-    report_path = Path(args.output_dir) / 'analysis-report.json'
-    with open(report_path, 'w') as f:
+    with open(output_path, 'w') as f:
         json.dump(analysis, f, indent=2)
-    print(f"\nFull analysis saved to: {report_path}")
+
+    print(f"\n✅ 项目上下文已保存到: {output_path}")
+
+    print("\n" + "="*60)
+    print("下一步：使用 AI 生成规范")
+    print("="*60)
+    print("\n在 Claude Code 中运行以下命令之一：")
+    print("\n1️⃣  填充项目上下文（推荐）：")
+    print('   "Please read openspec/project.md and help me fill it out')
+    print('    with details about my project, tech stack, and conventions"')
+    print("\n2️⃣  让 Claude 参考上下文创建规范：")
+    print(f'   "Please read {output_path} for project analysis,')
+    print('    then help me create comprehensive OpenSpec documentation"')
+    print("\n3️⃣  创建功能提案：")
+    print('   "I want to add [YOUR FEATURE]. Please create an')
+    print('    OpenSpec change proposal for this feature"')
+    print("\n📚 参考文档: reference/legacy-adoption.md")
+    print("="*60)
 
 if __name__ == "__main__":
     main()

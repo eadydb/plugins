@@ -24,8 +24,10 @@
     }
   ],
   "scripts": {
+    "adopt": "bash scripts/adopt-sdd.sh",
+    "init": "bash scripts/smart-init.sh",
     "validate": "uv run scripts/validate-spec.py",
-    "analyze": "uv run scripts/analyze-legacy-project.py",
+    "analyze": "uv run scripts/analyze-project-context.py",
     "detect-phase": "bash scripts/detect-phase.sh"
   },
   "dependencies": {
