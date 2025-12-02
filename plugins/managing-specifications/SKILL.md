@@ -176,32 +176,86 @@ sequenceDiagram
 **Trigger Condition**: Detection result is "brownfield"
 
 **Automated Behavior**:
+
 1. Check if OpenSpec is initialized:
    - Look for `openspec/` directory
    - If not initialized, suggest running `openspec init`
 
-2. Understand user requirements:
-   - New feature? Modify existing feature? Bug fix?
+2. **Detect user intent by keywords**:
 
-3. Create change proposal:
-   ```bash
-   openspec proposal <feature-name>
-   ```
+   **Implementation Intent** (keywords: "实施", "开始实施", "实施这个提案", "实施提案", "执行", "开始执行", "继续实施", "implement", "start implementation", "implement this proposal", "implement the proposal", "execute", "start executing", "resume implementation"):
+   - Trigger: Implementation Detection Flow (see below)
 
-4. Guide through completing proposal files:
-   - `proposal.md` - Problem statement, solution, impact analysis
-   - `design.md` - Technical design details
-   - `tasks.md` - Implementation task breakdown
+   **New Feature Intent** (keywords: "新功能", "添加功能", "创建提案", "新建提案", "new feature", "add feature", "create proposal", "new proposal"):
+   - Trigger: Proposal Creation Flow (see below)
 
-5. After implementation, guide archiving:
+3. **Implementation Detection Flow**:
+
+   a. Run proposal status detection:
+      ```bash
+      bash scripts/check-proposal-status.sh
+      ```
+
+   b. Find proposals in "ready" or "implementing" state
+
+   c. Determine which proposal to implement:
+      - If user mentions proposal name: use that specific proposal
+      - If only one ready/implementing proposal exists: use that one
+      - If multiple ready proposals exist: show list and ask user to choose
+
+   d. Check the proposal's status:
+      - **ready**: All files complete, no tasks started → Start from first task
+      - **implementing**: Some tasks done → Resume from first unchecked task
+      - **completed**: All tasks done → Suggest archiving instead
+      - **draft**: Files incomplete → Ask user to complete proposal files first
+
+   e. Execute implementation (see "Implementation Execution Pattern" below)
+
+4. **Proposal Creation Flow**:
+
+   a. Understand new feature requirements
+
+   b. Create change proposal:
+      ```bash
+      openspec proposal <feature-name>
+      ```
+
+   c. Guide through completing proposal files:
+      - `proposal.md` - Problem statement, solution, impact analysis
+      - `design.md` - Technical design details
+      - `tasks.md` - Implementation task breakdown
+
+   d. After all 3 files complete, inform user:
+      "Proposal is ready for implementation. Say '实施 <feature-name>' to start."
+
+5. **After implementation completes**, guide archiving:
    ```bash
    openspec archive <feature-name>
    ```
 
+**Implementation Execution Pattern**:
+
+**Critical Rules** (see `reference/implementation-patterns.md` for full details):
+- Do NOT create TodoWrite task list (use tasks.md directly)
+- Do NOT ask "Should I start?" (user's "实施" IS the confirmation)
+- Do NOT enter plan mode or ask for additional confirmation
+- Execute tasks sequentially, mark [x] in real-time, continue without interruption
+
+**Quick Reference**:
+- Keywords: "实施", "开始实施", "implement", "start implementation"
+- Status check: `bash scripts/check-proposal-status.sh <proposal-name>`
+- Execution: Read tasks.md → Execute → Mark [x] → Next task (no interruption)
+- After completion: Suggest archiving
+
+**Details**: See `reference/implementation-patterns.md` for complete execution steps, examples, and edge cases.
+
 **Brownfield Development Flow**:
 ```mermaid
 flowchart LR
-    Start([Feature Request]) --> Proposal[Create Proposal<br/>openspec proposal]
+    Start([Feature Request]) --> Intent{Intent?}
+
+    Intent -->|New Feature| Proposal[Create Proposal<br/>openspec proposal]
+    Intent -->|Implement| Detect[Detect Proposal Status<br/>check-proposal-status.sh]
 
     Proposal --> Files{Complete 3 files}
 
@@ -209,10 +263,16 @@ flowchart LR
     Files -->|design.md| P2[API Changes<br/>Data Models<br/>Integration Points]
     Files -->|tasks.md| P3[Task Breakdown<br/>Dependencies<br/>Test Plan]
 
-    P1 & P2 & P3 --> Review[Review & Approve]
+    P1 & P2 & P3 --> Ready[Status: ready]
 
-    Review -->|Approved| Implement[Implement Tasks]
-    Review -->|Needs Changes| Files
+    Detect --> State{Status?}
+    State -->|ready| Ready
+    State -->|implementing| Resume[Resume from<br/>first unchecked task]
+    State -->|completed| Archive
+    State -->|draft| Files
+
+    Ready -->|User: 实施| Implement[Implement Tasks<br/>NO interruption<br/>NO TodoWrite<br/>NO confirmation]
+    Resume --> Implement
 
     Implement --> Test[Test & Verify]
     Test -->|Pass| Archive[Archive<br/>openspec archive]
@@ -235,60 +295,12 @@ flowchart LR
 bash scripts/detect-transition.sh
 ```
 
-#### Phase Transition Diagram
+**Common Transitions**:
+- **Greenfield → Brownfield**: Initial dev complete → Run `migrate-to-openspec.sh`
+- **Legacy → Brownfield**: Baseline refined (TODO < 5) → Ready for feature proposals
+- **Brownfield**: Continuous iteration (create proposals → implement → archive)
 
-```mermaid
-stateDiagram-v2
-    [*] --> Greenfield: New project<br/>No code, no specs
-    [*] --> Legacy: Existing project<br/>Has code, no specs
-
-    Greenfield --> Brownfield: Initial dev complete<br/>+ Code implemented<br/>+ Run migrate-to-openspec.sh
-
-    Legacy --> Brownfield: Baseline refined<br/>+ TODOs < 5<br/>+ Analysis complete
-
-    Brownfield --> Brownfield: Continuous iteration<br/>Create proposals<br/>Implement features
-
-    note right of Greenfield
-        Use: spec-kit
-        Focus: 0→1 development
-    end note
-
-    note right of Legacy
-        Use: analyze + OpenSpec
-        Focus: Generate baseline
-    end note
-
-    note right of Brownfield
-        Use: OpenSpec
-        Focus: 1→N iteration
-    end note
-```
-
-#### Greenfield → Brownfield Transition
-
-**Trigger Conditions**:
-- `specs/` directory has complete specifications
-- Has source code implementation (`src/`, `app/` etc. exist)
-- User mentions keywords like "iteration", "new feature", "next step"
-
-**Auto Suggestion**:
-```
-"Detected that your project has completed initial development. Recommend migrating to OpenSpec to support continuous iteration.
-Run: bash scripts/migrate-to-openspec.sh"
-```
-
-#### Legacy → Brownfield Transition
-
-**Trigger Conditions**:
-- `openspec/specs/` has baseline specifications
-- Baseline specs are refined (TODO < 5)
-- User mentions keywords like "add feature", "modify"
-
-**Auto Suggestion**:
-```
-"Baseline specifications are complete! Now you can use OpenSpec to create feature proposals.
-What feature would you like to add?"
-```
+**Details**: See `reference/phase-transitions.md` for complete transition logic, detection criteria, and handling.
 
 ## Decision Flow Diagram
 
@@ -405,51 +417,18 @@ uv run scripts/validate-spec.py specs/001-feature/spec.md
 
 ## Quality Checkpoints
 
-### Specification Completeness Check
-
-**When to Trigger**: After spec creation, before implementation
-
-**Checklist**:
-- [ ] Specification files exist and are complete
-- [ ] Technical solution has clear documentation
-- [ ] Task breakdown is clear and testable
-- [ ] Design aligns with project architecture
-- [ ] Non-functional requirements considered
-- [ ] Dependencies identified
-
 **Automated Validation**:
 ```bash
 uv run scripts/validate-spec.py <spec-file>
 ```
 
-### Legacy Project Special Checks
+**Key Standards**:
+- Spec files complete before implementation
+- Legacy projects: TODO < 5 in baseline specs
+- OpenSpec proposals: All 3 files (proposal.md, design.md, tasks.md) complete
+- Tasks: 1-4 hour granularity, clear dependencies
 
-**Baseline Specification Completeness**:
-- [ ] `project.md` has TODO < 3
-- [ ] `architecture.md` has TODO < 2
-- [ ] At least 1 feature document in `features/`
-- [ ] Business context is clear
-- [ ] Architectural decisions documented
-
-**Completion Standard**: When total TODOs < 5, can start creating feature proposals
-
-### OpenSpec Proposal Quality
-
-**proposal.md**:
-- [ ] Problem statement is clear
-- [ ] Solution is specific
-- [ ] Impact analysis is complete
-- [ ] Alternative solutions considered
-
-**design.md**:
-- [ ] API changes are clear
-- [ ] Data models are clear
-- [ ] Integration points identified
-
-**tasks.md**:
-- [ ] Task breakdown is reasonable (each 1-4 hours)
-- [ ] Dependencies are correct
-- [ ] Independently testable
+**Details**: See `reference/quality-checklist.md` for complete checklists and quality gates.
 
 ## Prerequisites
 

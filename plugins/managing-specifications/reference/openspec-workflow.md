@@ -59,11 +59,59 @@
 
 ## Phase 4: Implementation
 
-**Steps**:
+**Trigger**: User explicitly requests implementation with keywords:
+- Chinese: "实施", "开始实施", "实施这个提案", "实施提案", "执行", "开始执行", "继续实施"
+- English: "implement", "start implementation", "implement this proposal", "implement the proposal", "execute", "start executing", "resume implementation"
 
-1. Work through tasks.md checklist
-2. Mark completed tasks with [x]
-3. Update proposal.md status as progress
+AND proposal status is "ready" (all files complete, tasks unchecked) or "implementing" (some tasks checked)
+
+**Automated Behavior (via Claude Code managing-specifications skill)**:
+
+1. **Detect ready state**:
+   ```bash
+   bash scripts/check-proposal-status.sh <proposal-name>
+   ```
+
+   Verification:
+   - All 3 files exist (proposal.md, design.md, tasks.md)
+   - tasks.md contains task items (format: `- [ ] Task description`)
+   - At least one task is unchecked
+
+2. **Direct execution** (NO interruption, NO TodoWrite, NO confirmation):
+   - Read tasks.md to get task list
+   - Execute tasks sequentially from first unchecked task
+   - Mark each task complete in tasks.md as it's done: `- [ ]` → `- [x]`
+   - Continue automatically until all tasks are checked
+   - Do NOT create separate TodoWrite list
+   - Do NOT ask for confirmation (user's "实施" IS the confirmation)
+
+3. **During implementation**:
+   - Update task checkboxes in tasks.md in real-time
+   - Add implementation notes as comments if needed
+   - Keep user informed of progress
+
+4. **After completion**:
+   - Suggest running tests if applicable
+   - Ask if user wants to archive: `openspec archive <proposal-name>`
+
+**Manual Steps** (if not using Claude Code):
+
+1. Open `openspec/changes/<proposal-name>/tasks.md`
+2. Work through each task in order
+3. Mark completed tasks with [x]: `- [x] Completed task`
+4. When all tasks done, run: `openspec archive <proposal-name>`
+
+**Key Principle**:
+When user says "实施/implement" for a ready proposal, treat it as explicit authorization. The system should execute directly from tasks.md without creating additional task lists or asking for confirmation. The user's implementation request IS the confirmation.
+
+**Status-Based Behavior**:
+
+| Status | Detected When | Action |
+|--------|--------------|--------|
+| ready | All files exist, all tasks unchecked | Start from first task |
+| implementing | Some tasks checked, some unchecked | Resume from first unchecked task |
+| completed | All tasks checked | Suggest archiving instead |
+| draft | Missing files or no tasks | Ask user to complete proposal first |
 
 ## Phase 5: Archive
 

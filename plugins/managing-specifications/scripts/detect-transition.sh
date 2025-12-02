@@ -61,12 +61,38 @@ case $PHASE in
         ;;
 
     "brownfield")
-        # Check OpenSpec usage status
+        # Check OpenSpec usage status and proposal readiness
         if [ -d "openspec/changes" ]; then
             ACTIVE_CHANGES=$(find openspec/changes -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l || echo "0")
+
             if [ "$ACTIVE_CHANGES" -gt 0 ]; then
-                echo "active-iteration"
-                echo "✅ Project is actively iterating ($ACTIVE_CHANGES active changes)" >&2
+                # Check for proposals ready for implementation
+                READY_PROPOSALS=""
+                IMPLEMENTING_PROPOSALS=""
+
+                # Use check-proposal-status.sh if available
+                if [ -f "$SCRIPT_DIR/check-proposal-status.sh" ]; then
+                    while IFS=: read -r name status; do
+                        if [ "$status" = "ready" ]; then
+                            READY_PROPOSALS="$READY_PROPOSALS $name"
+                        elif [ "$status" = "implementing" ]; then
+                            IMPLEMENTING_PROPOSALS="$IMPLEMENTING_PROPOSALS $name"
+                        fi
+                    done < <(bash "$SCRIPT_DIR/check-proposal-status.sh" 2>/dev/null)
+                fi
+
+                if [ -n "$READY_PROPOSALS" ]; then
+                    echo "ready-for-implementation"
+                    echo "✅ Proposals ready for implementation:$READY_PROPOSALS" >&2
+                    echo "Say '实施 <proposal-name>' or 'implement <proposal-name>' to start" >&2
+                elif [ -n "$IMPLEMENTING_PROPOSALS" ]; then
+                    echo "in-progress-implementation"
+                    echo "🔄 Implementation in progress:$IMPLEMENTING_PROPOSALS" >&2
+                    echo "Say '继续实施 <proposal-name>' to resume" >&2
+                else
+                    echo "active-iteration"
+                    echo "✅ Project is actively iterating ($ACTIVE_CHANGES active changes)" >&2
+                fi
             else
                 echo "stable-iteration"
                 echo "📋 Project is in stable state, can create new change proposals" >&2
