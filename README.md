@@ -6,20 +6,20 @@ A Claude Code plugin marketplace providing essential development workflow tools 
 
 ### Managing Specifications
 
-智能化的规范驱动开发(SDD)工作流管理，支持 spec-kit 和 OpenSpec。
+Intelligent Specification-Driven Development (SDD) workflow management, supporting spec-kit and OpenSpec.
 
-**核心特性** (v1.1.0):
-- **自动阶段检测**: 智能识别 Greenfield/Legacy/Brownfield 项目类型
-- **Legacy 项目自动化**: 代码分析 + 基准规范自动生成 + AI 辅助完善
-- **阶段转换建议**: 自动检测并引导项目过渡到下一阶段
-- **智能工作流选择**: 根据项目状态自动选择 spec-kit 或 OpenSpec
-- **质量检查点**: 内置规范完整性验证和质量保证
+**Core Features** (v1.1.0):
+- **Automatic Phase Detection**: Intelligently identifies Greenfield/Legacy/Brownfield project types
+- **Legacy Project Automation**: Code analysis + baseline spec auto-generation + AI-assisted refinement
+- **Phase Transition Suggestions**: Automatically detects and guides project transitions to the next phase
+- **Intelligent Workflow Selection**: Automatically chooses spec-kit or OpenSpec based on project state
+- **Quality Checkpoints**: Built-in specification completeness validation and quality assurance
 
-**适用场景**:
-- 从零开始的新项目（Greenfield → spec-kit）
-- 为现有项目添加功能（Brownfield → OpenSpec）
-- 为 Legacy 代码库采用 SDD（Legacy → 分析 + OpenSpec）
-- 从 spec-kit 迁移到 OpenSpec（完成初始开发后）
+**Use Cases**:
+- New projects from scratch (Greenfield → spec-kit)
+- Adding features to existing projects (Brownfield → OpenSpec)
+- Adopting SDD for legacy codebases (Legacy → Analysis + OpenSpec)
+- Migrating from spec-kit to OpenSpec (after completing initial development)
 
 ## Installation
 

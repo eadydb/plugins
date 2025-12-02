@@ -6,207 +6,369 @@ allowed-tools: Read, Grep, Glob, Bash, Write, Edit
 
 # Specification Management
 
-智能化的规范驱动开发(SDD)管理，根据项目阶段自动选择合适的框架和工作流。
+Intelligent Specification-Driven Development (SDD) management that automatically selects appropriate frameworks and workflows based on project phase.
 
-## 核心能力
+## Core Capabilities
 
-- **自动阶段检测**: 识别 Greenfield/Legacy/Brownfield 项目类型
-- **智能框架选择**: Greenfield→spec-kit, Brownfield→OpenSpec
-- **Legacy 项目采用**: 代码分析 + 基准规范自动生成 + AI 辅助完善
-- **阶段转换建议**: 自动识别并引导项目过渡到下一阶段
-- **全流程指导**: 从规范创建到迭代管理的端到端支持
+- **Automatic Phase Detection**: Identifies Greenfield/Legacy/Brownfield project types
+- **Intelligent Framework Selection**: Greenfield→spec-kit, Brownfield→OpenSpec
+- **Legacy Project Adoption**: Code analysis + baseline spec auto-generation + AI-assisted refinement
+- **Phase Transition Suggestions**: Automatically identifies and guides project transitions to the next phase
+- **End-to-End Guidance**: Complete support from specification creation to iterative management
 
-## 自动行为（Skill 触发时）
+## Automatic Behavior (When Skill is Triggered)
 
-当用户提出与规范相关的请求时，Skill 应该：
+When users make specification-related requests, the Skill should:
 
-### 1. 首次检测项目状态
+### 1. Initial Project State Detection
 
-**必须执行**:
+**Must Execute**:
 ```bash
 bash scripts/detect-phase.sh
 ```
 
-根据检测结果决定后续行动。不要猜测项目类型，必须运行检测命令。
+Make decisions based on detection results. Do not guess project type - must run detection command.
 
-### 2. 根据项目阶段采取行动
+### 2. Take Action Based on Project Phase
 
-#### Greenfield 场景（无代码 + 无规范）
+#### Greenfield Scenario (No Code + No Specs)
 
-**触发条件**: 检测结果为 "greenfield"
+**Trigger Condition**: Detection result is "greenfield"
 
-**自动化行为**:
-1. 确认用户意图（创建新项目规范）
-2. 收集需求信息：
-   - 核心功能和用户故事
-   - 技术栈偏好
-   - 技术约束（性能、安全等）
-   - 目标用户群体
-3. 引导 spec-kit 初始化（如果未初始化）:
+**Automated Behavior**:
+1. Confirm user intent (creating new project specification)
+2. Collect requirement information:
+   - Core features and user stories
+   - Tech stack preferences
+   - Technical constraints (performance, security, etc.)
+   - Target user groups
+3. Guide spec-kit initialization (if not initialized):
    ```bash
-   # 推荐使用这个命令
+   # Recommended command
    uvx --from git+https://github.com/github/spec-kit.git specify init <project-name> --here --ai claude
    ```
-4. 协助完成规范文件：
-   - `specs/001-<feature>/spec.md` - 详细需求规范
-   - `specs/001-<feature>/plan.md` - 技术方案
-   - `specs/001-<feature>/research.md` - 技术调研（如需要）
+4. Assist in completing specification files:
+   - `specs/001-<feature>/spec.md` - Detailed requirement specification
+   - `specs/001-<feature>/plan.md` - Technical plan
+   - `specs/001-<feature>/research.md` - Technical research (if needed)
 
-**检查点**: 确保每个规范文件完整且可实施
+**Checkpoint**: Ensure each specification file is complete and implementable
 
-#### Legacy 场景（有代码 + 无规范）
+**Greenfield Development Flow**:
+```mermaid
+flowchart TD
+    Start([New Project]) --> Init[Initialize spec-kit<br/>uvx specify init]
 
-**触发条件**: 检测结果为 "legacy"
+    Init --> Gather[Gather Requirements]
 
-**自动化行为**:
-1. 检查是否已运行分析:
-   - 查找 `.claude/project-context.json`
-   - 查找 `openspec/specs/project.md`
+    Gather --> Info{Collect}
+    Info -->|Features| F[Core features &<br/>user stories]
+    Info -->|Tech Stack| T[Languages &<br/>frameworks]
+    Info -->|Constraints| C[Performance &<br/>security needs]
 
-2. 如未分析，**主动建议**运行采用流程:
+    F & T & C --> Create[Create Spec Files]
+
+    Create --> Spec[specs/001-feature/<br/>spec.md]
+    Create --> Plan[specs/001-feature/<br/>plan.md]
+    Create --> Research[specs/001-feature/<br/>research.md<br/>optional]
+
+    Spec & Plan & Research --> Review{Review Complete?}
+
+    Review -->|Yes| Implement[Implement Feature]
+    Review -->|No| Create
+
+    Implement --> Code[Write Code]
+    Code --> Check{Initial Dev<br/>Complete?}
+
+    Check -->|No| Code
+    Check -->|Yes| Migrate[Migrate to OpenSpec<br/>migrate-to-openspec.sh]
+
+    Migrate --> Brownfield([Now: Brownfield Phase])
+
+    style Start fill:#e1f5e1
+    style Init fill:#fff4e1
+    style Create fill:#e1f0ff
+    style Implement fill:#ffe1e1
+    style Migrate fill:#f0e1ff
+    style Brownfield fill:#e1f0ff
+```
+
+#### Legacy Scenario (Has Code + No Specs)
+
+**Trigger Condition**: Detection result is "legacy"
+
+**Automated Behavior**:
+1. Check if analysis has been run:
+   - Look for `.claude/project-context.json`
+   - Look for `openspec/specs/project.md`
+
+2. If not analyzed, **proactively suggest** running adoption process:
    ```bash
    bash scripts/adopt-sdd.sh
    ```
-   说明：这将自动初始化 OpenSpec 并生成基准规范
+   Note: This will automatically initialize OpenSpec and generate baseline specifications
 
-3. 分析完成后，**必须执行**:
-   - 读取 `openspec/specs/project.md`
-   - 读取 `openspec/specs/architecture.md`
-   - 读取 `.claude/project-context.json`（项目分析数据）
+3. After analysis completes, **must execute**:
+   - Read `openspec/specs/project.md`
+   - Read `openspec/specs/architecture.md`
+   - Read `.claude/project-context.json` (project analysis data)
 
-4. 引导用户完善规范：
-   - 识别所有 `[TODO]` 标记
-   - 逐项询问细节并更新文件
-   - 确保业务上下文、架构决策清晰
+4. Guide user to refine specifications:
+   - Identify all `[TODO]` markers
+   - Ask for details item by item and update files
+   - Ensure business context and architectural decisions are clear
 
-5. 建议创建功能文档:
+5. Suggest creating feature documentation:
    ```
-   "让我帮你识别核心功能并在 openspec/specs/features/ 创建文档"
+   "Let me help you identify core features and create documentation in openspec/specs/features/"
    ```
 
-**完成标准**: 基准规范文件中 TODO 少于 5 个
+**Completion Standard**: Fewer than 5 TODOs in baseline specification files
 
-#### Brownfield 场景（有代码 + 有规范）
+**Legacy Adoption Flow**:
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant C as Claude Code
+    participant S as adopt-sdd.sh
+    participant A as analyze-project-context.py
+    participant F as File System
 
-**触发条件**: 检测结果为 "brownfield"
+    U->>C: "Adopt SDD for my legacy project"
+    C->>C: Run detect-phase.sh
+    C->>U: Detected as "legacy" phase
 
-**自动化行为**:
-1. 检查 OpenSpec 是否已初始化：
-   - 查找 `openspec/` 目录
-   - 如未初始化，建议运行 `openspec init`
+    C->>U: Suggest running adopt-sdd.sh
+    U->>S: Execute adopt-sdd.sh
 
-2. 理解用户需求：
-   - 新功能？修改现有功能？Bug 修复？
+    S->>F: Check if OpenSpec exists
+    alt OpenSpec not found
+        S->>F: Install & initialize OpenSpec
+    end
 
-3. 创建变更提案:
+    S->>A: Run analyze-project-context.py --generate-specs
+    A->>F: Scan codebase structure
+    A->>F: Detect APIs, schemas, dependencies
+    A->>F: Generate .claude/project-context.json
+    A->>F: Generate openspec/specs/project.md [with TODOs]
+    A->>F: Generate openspec/specs/architecture.md [with TODOs]
+    A->>F: Create openspec/specs/features/
+
+    S->>U: ✅ Baseline specs generated
+
+    U->>C: "Help me refine the specs"
+    C->>F: Read project.md
+    C->>F: Read architecture.md
+    C->>F: Read project-context.json
+
+    loop For each TODO
+        C->>U: Ask for details
+        U->>C: Provide information
+        C->>F: Update spec files
+    end
+
+    C->>U: ✅ Baseline specs refined (TODOs < 5)
+    C->>U: Ready to create feature proposals!
+```
+
+#### Brownfield Scenario (Has Code + Has Specs)
+
+**Trigger Condition**: Detection result is "brownfield"
+
+**Automated Behavior**:
+1. Check if OpenSpec is initialized:
+   - Look for `openspec/` directory
+   - If not initialized, suggest running `openspec init`
+
+2. Understand user requirements:
+   - New feature? Modify existing feature? Bug fix?
+
+3. Create change proposal:
    ```bash
    openspec proposal <feature-name>
    ```
 
-4. 引导完成提案文件：
-   - `proposal.md` - 问题陈述、解决方案、影响分析
-   - `design.md` - 技术设计细节
-   - `tasks.md` - 实施任务分解
+4. Guide through completing proposal files:
+   - `proposal.md` - Problem statement, solution, impact analysis
+   - `design.md` - Technical design details
+   - `tasks.md` - Implementation task breakdown
 
-5. 实施完成后，引导归档:
+5. After implementation, guide archiving:
    ```bash
    openspec archive <feature-name>
    ```
 
-### 3. 检测阶段转换需求
+**Brownfield Development Flow**:
+```mermaid
+flowchart LR
+    Start([Feature Request]) --> Proposal[Create Proposal<br/>openspec proposal]
 
-**在每次 Skill 触发时检查**:
+    Proposal --> Files{Complete 3 files}
+
+    Files -->|proposal.md| P1[Problem Statement<br/>Solution<br/>Impact Analysis]
+    Files -->|design.md| P2[API Changes<br/>Data Models<br/>Integration Points]
+    Files -->|tasks.md| P3[Task Breakdown<br/>Dependencies<br/>Test Plan]
+
+    P1 & P2 & P3 --> Review[Review & Approve]
+
+    Review -->|Approved| Implement[Implement Tasks]
+    Review -->|Needs Changes| Files
+
+    Implement --> Test[Test & Verify]
+    Test -->|Pass| Archive[Archive<br/>openspec archive]
+    Test -->|Fail| Implement
+
+    Archive --> Merge[Merge to specs/]
+    Merge --> Next([Ready for next feature])
+
+    style Start fill:#e1f0ff
+    style Proposal fill:#fff4e1
+    style Implement fill:#e1f5e1
+    style Archive fill:#ffe1e1
+    style Next fill:#e1f0ff
+```
+
+### 3. Detect Phase Transition Requirements
+
+**Check on every Skill trigger**:
 ```bash
 bash scripts/detect-transition.sh
 ```
 
-#### Greenfield → Brownfield 转换
+#### Phase Transition Diagram
 
-**触发条件**:
-- `specs/` 目录存在完整规范
-- 有源代码实现（`src/`、`app/` 等存在）
-- 用户提到"迭代"、"新功能"、"下一步"等关键词
+```mermaid
+stateDiagram-v2
+    [*] --> Greenfield: New project<br/>No code, no specs
+    [*] --> Legacy: Existing project<br/>Has code, no specs
 
-**自动建议**:
-```
-"检测到你的项目已完成初始开发。建议迁移到 OpenSpec 以支持持续迭代。
-运行: bash scripts/migrate-to-openspec.sh"
-```
+    Greenfield --> Brownfield: Initial dev complete<br/>+ Code implemented<br/>+ Run migrate-to-openspec.sh
 
-#### Legacy → Brownfield 转换
+    Legacy --> Brownfield: Baseline refined<br/>+ TODOs < 5<br/>+ Analysis complete
 
-**触发条件**:
-- `openspec/specs/` 已有基准规范
-- 基准规范已被完善（TODO < 5）
-- 用户提到"添加功能"、"修改"等关键词
+    Brownfield --> Brownfield: Continuous iteration<br/>Create proposals<br/>Implement features
 
-**自动建议**:
-```
-"基准规范已完善！现在可以使用 OpenSpec 创建功能提案了。
-你想添加什么功能？"
-```
+    note right of Greenfield
+        Use: spec-kit
+        Focus: 0→1 development
+    end note
 
-## 决策流程图
+    note right of Legacy
+        Use: analyze + OpenSpec
+        Focus: Generate baseline
+    end note
 
-```
-用户请求
-   ↓
-检测项目阶段（detect-phase.sh）
-   ↓
-┌─────────────┬──────────────┬─────────────┐
-│ Greenfield  │   Legacy     │ Brownfield  │
-└─────────────┴──────────────┴─────────────┘
-     ↓              ↓               ↓
-spec-kit 流程   分析+生成      OpenSpec 流程
-     ↓              ↓               ↓
-收集需求      运行 adopt-sdd   创建 proposal
-     ↓              ↓               ↓
-创建 spec.md   读取基准规范    完成 design.md
-     ↓              ↓               ↓
-编写 plan.md   引导完善 TODO   分解 tasks.md
-     ↓              ↓               ↓
-研究(可选)    验证完整性      实施和归档
-     ↓              ↓               ↓
-   检测转换       检测转换        持续迭代
+    note right of Brownfield
+        Use: OpenSpec
+        Focus: 1→N iteration
+    end note
 ```
 
-## 快速采用
+#### Greenfield → Brownfield Transition
 
-一键命令（推荐）:
+**Trigger Conditions**:
+- `specs/` directory has complete specifications
+- Has source code implementation (`src/`, `app/` etc. exist)
+- User mentions keywords like "iteration", "new feature", "next step"
+
+**Auto Suggestion**:
+```
+"Detected that your project has completed initial development. Recommend migrating to OpenSpec to support continuous iteration.
+Run: bash scripts/migrate-to-openspec.sh"
+```
+
+#### Legacy → Brownfield Transition
+
+**Trigger Conditions**:
+- `openspec/specs/` has baseline specifications
+- Baseline specs are refined (TODO < 5)
+- User mentions keywords like "add feature", "modify"
+
+**Auto Suggestion**:
+```
+"Baseline specifications are complete! Now you can use OpenSpec to create feature proposals.
+What feature would you like to add?"
+```
+
+## Decision Flow Diagram
+
+```mermaid
+flowchart TD
+    Start[User Request] --> Detect[Detect Project Phase<br/>detect-phase.sh]
+    Detect --> Phase{Project Phase?}
+
+    Phase -->|Greenfield| GF[spec-kit flow]
+    Phase -->|Legacy| LG[Analyze + Generate]
+    Phase -->|Brownfield| BF[OpenSpec flow]
+
+    GF --> GF1[Gather requirements]
+    GF1 --> GF2[Create spec.md]
+    GF2 --> GF3[Write plan.md]
+    GF3 --> GF4[Research optional]
+    GF4 --> GF5[Detect transition]
+
+    LG --> LG1[Run adopt-sdd.sh]
+    LG1 --> LG2[Read baseline specs]
+    LG2 --> LG3[Refine TODOs]
+    LG3 --> LG4[Verify completeness]
+    LG4 --> LG5[Detect transition]
+
+    BF --> BF1[Create proposal]
+    BF1 --> BF2[Complete design.md]
+    BF2 --> BF3[Break down tasks.md]
+    BF3 --> BF4[Implement & archive]
+    BF4 --> BF5[Continuous iteration]
+
+    GF5 --> Next{Ready for<br/>next phase?}
+    LG5 --> Next
+    BF5 --> Loop[Continue iterating]
+    Loop --> BF
+
+    style GF fill:#e1f5e1
+    style LG fill:#fff4e1
+    style BF fill:#e1f0ff
+    style Start fill:#f0f0f0
+    style Detect fill:#f0f0f0
+    style Phase fill:#ffe1e1
+```
+
+## Quick Adoption
+
+One-command (recommended):
 
 ```bash
 bash scripts/adopt-sdd.sh
 ```
 
-此命令会自动：
-1. 检测项目阶段
-2. 初始化对应框架（spec-kit 或 OpenSpec）
-3. Legacy 项目：分析代码并生成基准规范
-4. 引导后续步骤
+This command automatically:
+1. Detects project phase
+2. Initializes corresponding framework (spec-kit or OpenSpec)
+3. Legacy projects: Analyzes code and generates baseline specifications
+4. Guides subsequent steps
 
-手动检测阶段:
+Manual phase detection:
 
 ```bash
 bash scripts/detect-phase.sh
 ```
 
-| 检测结果 | 含义 | 推荐行动 |
+| Detection Result | Meaning | Recommended Action |
 |--------|------|---------|
-| greenfield | 无代码、无规范 | 使用 spec-kit → `reference/spec-kit-workflow.md` |
-| brownfield | 有代码、有规范 | 使用 OpenSpec → `reference/openspec-workflow.md` |
-| legacy | 有代码、无规范 | 运行 adopt-sdd.sh → `reference/legacy-adoption.md` |
-| spec-kit-only | 有 spec-kit，需要 OpenSpec | 迁移 → `reference/migration-guide.md` |
+| greenfield | No code, no specs | Use spec-kit → `reference/spec-kit-workflow.md` |
+| brownfield | Has code, has specs | Use OpenSpec → `reference/openspec-workflow.md` |
+| legacy | Has code, no specs | Run adopt-sdd.sh → `reference/legacy-adoption.md` |
+| spec-kit-only | Has spec-kit, needs OpenSpec | Migrate → `reference/migration-guide.md` |
 
-## 可用脚本
+## Available Scripts
 
-| 脚本 | 用途 | 何时使用 |
+| Script | Purpose | When to Use |
 |------|------|---------|
-| `scripts/adopt-sdd.sh` | **一键 SDD 采用**（推荐） | 任何新项目或 Legacy 项目开始采用 SDD |
-| `scripts/detect-phase.sh` | 检测项目阶段 | Skill 首次触发时必须运行 |
-| `scripts/detect-transition.sh` | 检测阶段转换 | 每次 Skill 触发时检查（自动） |
-| `scripts/analyze-project-context.py` | 分析项目并生成基准规范 | Legacy 项目初次采用（由 adopt-sdd.sh 调用）|
-| `scripts/migrate-to-openspec.sh` | 从 spec-kit 迁移到 OpenSpec | Greenfield 项目完成初始开发后 |
-| `scripts/validate-spec.py` | 验证规范完整性 | 规范创建完成后、实施前 |
+| `scripts/adopt-sdd.sh` | **One-command SDD adoption** (recommended) | Any new project or Legacy project starting SDD adoption |
+| `scripts/detect-phase.sh` | Detect project phase | Must run on first Skill trigger |
+| `scripts/detect-transition.sh` | Detect phase transitions | Check on every Skill trigger (automatic) |
+| `scripts/analyze-project-context.py` | Analyze project and generate baseline specs | Legacy project initial adoption (called by adopt-sdd.sh) |
+| `scripts/migrate-to-openspec.sh` | Migrate from spec-kit to OpenSpec | After Greenfield project completes initial development |
+| `scripts/validate-spec.py` | Validate specification completeness | After spec creation, before implementation |
 
 **Running Python scripts**: Use `uv run scripts/<script-name>.py`
 
@@ -230,64 +392,64 @@ uv run scripts/validate-spec.py specs/001-feature/spec.md
 - **Migration**: `reference/migration-guide.md`
 - **Initialization**: `reference/init-commands.md`
 
-## 常见任务处理
+## Common Task Handling
 
-| 用户请求示例 | 自动化行为 | 执行步骤 |
+| User Request Example | Automated Behavior | Execution Steps |
 |------------|----------|---------|
-| "为 [功能] 创建规范" | 1. 检测阶段<br>2. 选择框架<br>3. 引导创建 | Greenfield: spec-kit 完整流程<br>Brownfield: OpenSpec proposal |
-| "为现有项目添加新功能" | 1. 确认 OpenSpec 存在<br>2. 创建提案<br>3. 完成 design/tasks | `openspec proposal <name>`<br>引导完善三个文件 |
-| "采用 SDD 开发" | 1. 检测为 Legacy<br>2. 运行 adopt-sdd.sh<br>3. 引导完善规范 | 自动生成基准规范<br>AI 辅助完善 TODO |
-| "准备迭代开发" | 1. 检测转换需求<br>2. 建议迁移<br>3. 执行迁移脚本 | `bash scripts/migrate-to-openspec.sh` |
-| "完善项目文档" | 1. 读取现有规范<br>2. 识别 TODO<br>3. 逐项询问更新 | 针对 Legacy 项目基准规范 |
-| "验证规范质量" | 1. 运行验证脚本<br>2. 报告问题<br>3. 建议改进 | `uv run scripts/validate-spec.py` |
+| "Create spec for [feature]" | 1. Detect phase<br>2. Select framework<br>3. Guide creation | Greenfield: spec-kit full workflow<br>Brownfield: OpenSpec proposal |
+| "Add new feature to existing project" | 1. Confirm OpenSpec exists<br>2. Create proposal<br>3. Complete design/tasks | `openspec proposal <name>`<br>Guide through completing three files |
+| "Adopt SDD development" | 1. Detect as Legacy<br>2. Run adopt-sdd.sh<br>3. Guide spec refinement | Auto-generate baseline specs<br>AI-assisted TODO completion |
+| "Prepare for iterative development" | 1. Detect transition need<br>2. Suggest migration<br>3. Execute migration script | `bash scripts/migrate-to-openspec.sh` |
+| "Improve project documentation" | 1. Read existing specs<br>2. Identify TODOs<br>3. Ask and update item by item | For Legacy project baseline specs |
+| "Validate spec quality" | 1. Run validation script<br>2. Report issues<br>3. Suggest improvements | `uv run scripts/validate-spec.py` |
 
-## 质量检查点
+## Quality Checkpoints
 
-### 规范完整性检查
+### Specification Completeness Check
 
-**触发时机**: 规范创建完成后、实施前
+**When to Trigger**: After spec creation, before implementation
 
-**检查项**:
-- [ ] 规范文件存在且完整
-- [ ] 技术方案有明确文档
-- [ ] 任务分解清晰可测试
-- [ ] 设计符合项目架构
-- [ ] 非功能性需求已考虑
-- [ ] 依赖关系已识别
+**Checklist**:
+- [ ] Specification files exist and are complete
+- [ ] Technical solution has clear documentation
+- [ ] Task breakdown is clear and testable
+- [ ] Design aligns with project architecture
+- [ ] Non-functional requirements considered
+- [ ] Dependencies identified
 
-**自动验证**:
+**Automated Validation**:
 ```bash
 uv run scripts/validate-spec.py <spec-file>
 ```
 
-### Legacy 项目特殊检查
+### Legacy Project Special Checks
 
-**基准规范完成度**:
-- [ ] `project.md` 中 TODO < 3
-- [ ] `architecture.md` 中 TODO < 2
-- [ ] 至少有 1 个功能文档在 `features/`
-- [ ] 业务上下文清晰
-- [ ] 架构决策有文档
+**Baseline Specification Completeness**:
+- [ ] `project.md` has TODO < 3
+- [ ] `architecture.md` has TODO < 2
+- [ ] At least 1 feature document in `features/`
+- [ ] Business context is clear
+- [ ] Architectural decisions documented
 
-**完成标准**: 当 TODO 总数 < 5 时，可以开始创建功能提案
+**Completion Standard**: When total TODOs < 5, can start creating feature proposals
 
-### OpenSpec 提案质量
+### OpenSpec Proposal Quality
 
 **proposal.md**:
-- [ ] 问题陈述清晰
-- [ ] 解决方案具体
-- [ ] 影响分析完整
-- [ ] 考虑了替代方案
+- [ ] Problem statement is clear
+- [ ] Solution is specific
+- [ ] Impact analysis is complete
+- [ ] Alternative solutions considered
 
 **design.md**:
-- [ ] API 变更明确
-- [ ] 数据模型清晰
-- [ ] 集成点已识别
+- [ ] API changes are clear
+- [ ] Data models are clear
+- [ ] Integration points identified
 
 **tasks.md**:
-- [ ] 任务分解合理（每个 1-4 小时）
-- [ ] 依赖关系正确
-- [ ] 可独立测试
+- [ ] Task breakdown is reasonable (each 1-4 hours)
+- [ ] Dependencies are correct
+- [ ] Independently testable
 
 ## Prerequisites
 
@@ -309,11 +471,11 @@ If commands fail, check prerequisites:
 
 See `reference/init-commands.md` for installation commands.
 
-## 版本历史
+## Version History
 
-- **v1.1.0**: 智能化增强
-  - 添加自动阶段检测和转换建议
-  - Legacy 项目自动生成基准规范
-  - 详细的决策逻辑和自动化行为
-  - 完整的质量检查点
-- **v1.0.0**: 初始实现
+- **v1.1.0**: Intelligence Enhancement
+  - Added automatic phase detection and transition suggestions
+  - Auto-generate baseline specs for Legacy projects
+  - Detailed decision logic and automated behaviors
+  - Complete quality checkpoints
+- **v1.0.0**: Initial implementation

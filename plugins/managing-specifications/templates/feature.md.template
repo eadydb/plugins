@@ -1,31 +1,31 @@
 # {FEATURE_NAME}
 
-## 功能概述
+## Feature Overview
 
-[TODO: 描述该功能的目的和价值]
+[TODO: Describe the purpose and value of this feature]
 
-## 用户故事
+## User Stories
 
-[TODO: 列出相关的用户故事]
+[TODO: List relevant user stories]
 
-示例格式：
-- 作为 [角色]，我想要 [功能]，以便 [价值]
+Example format:
+- As a [role], I want [feature], so that [value]
 
-## 功能需求
+## Functional Requirements
 
-### 核心功能
+### Core Functionality
 
-[TODO: 详细描述核心功能点]
+[TODO: Describe core feature points in detail]
 
-### 边界条件
+### Boundary Conditions
 
-[TODO: 说明功能的边界、不包含的内容]
+[TODO: Explain feature boundaries, what is not included]
 
-## 技术实现
+## Technical Implementation
 
-### API 设计（如适用）
+### API Design (if applicable)
 
-[TODO: 列出相关的 API 端点]
+[TODO: List relevant API endpoints]
 
 ```
 POST /api/resource
@@ -34,46 +34,46 @@ PUT /api/resource/:id
 DELETE /api/resource/:id
 ```
 
-### 数据模型（如适用）
+### Data Models (if applicable)
 
-[TODO: 描述涉及的数据表或数据结构]
+[TODO: Describe involved data tables or data structures]
 
-### 关键流程
+### Key Workflows
 
-[TODO: 使用流程图或步骤描述关键业务流程]
+[TODO: Use flowcharts or steps to describe key business processes]
 
-1. 用户操作
-2. 系统验证
-3. 数据处理
-4. 返回结果
+1. User action
+2. System validation
+3. Data processing
+4. Return results
 
-## 非功能性需求
+## Non-Functional Requirements
 
-### 性能要求
+### Performance Requirements
 
-[TODO: 响应时间、并发处理等]
+[TODO: Response time, concurrent processing, etc.]
 
-### 安全要求
+### Security Requirements
 
-[TODO: 权限控制、数据验证等]
+[TODO: Access control, data validation, etc.]
 
-## 测试要点
+## Testing Points
 
-[TODO: 列出关键测试场景]
+[TODO: List key test scenarios]
 
-- [ ] 正常流程测试
-- [ ] 边界条件测试
-- [ ] 错误处理测试
-- [ ] 性能测试
+- [ ] Normal flow testing
+- [ ] Boundary condition testing
+- [ ] Error handling testing
+- [ ] Performance testing
 
-## 依赖关系
+## Dependencies
 
-[TODO: 列出依赖的其他功能或服务]
+[TODO: List dependencies on other features or services]
 
-## 上线计划
+## Release Plan
 
-[TODO: 描述发布策略、灰度方案、回滚计划]
+[TODO: Describe release strategy, gradual rollout plan, rollback plan]
 
 ---
 
-*此模板用于描述单个功能特性*
+*This template is used to describe individual features*

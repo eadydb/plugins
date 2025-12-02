@@ -2,10 +2,10 @@
 # Detect project phase: greenfield (0→1), brownfield (1→N), or legacy (existing without SDD)
 #
 # Detection logic:
-# - greenfield: 无代码 + 无规范 → spec-kit (0→1)
-# - legacy:     有代码 + 无规范 → 分析 + OpenSpec (先分析生成基准规范)
-# - brownfield: 有代码 + 有规范 → OpenSpec (功能迭代和变更管理)
-# - spec-kit-only: 有 spec-kit → 考虑迁移到 OpenSpec
+# - greenfield: No code + No specs → spec-kit (0→1)
+# - legacy:     Has code + No specs → Analyze + OpenSpec (analyze first, generate baseline specs)
+# - brownfield: Has code + Has specs → OpenSpec (feature iteration and change management)
+# - spec-kit-only: Has spec-kit → Consider migrating to OpenSpec
 
 set -e
 

@@ -9,13 +9,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PHASE=$(bash "$SCRIPT_DIR/detect-phase.sh" | head -n 1)
 
 # 2. Show detected phase
-echo "检测到项目阶段: $PHASE"
+echo "Detected project phase: $PHASE"
 
 # 3. Ask user confirmation
-read -p "是否执行推荐的初始化? (y/n) " confirm
+read -p "Execute recommended initialization? (y/n) " confirm
 
 if [ "$confirm" != "y" ]; then
-    echo "已取消初始化"
+    echo "Initialization cancelled"
     exit 0
 fi
 
@@ -23,57 +23,57 @@ case $PHASE in
     "greenfield")
         # Check if uv/uvx is installed
         if ! command -v uvx &> /dev/null; then
-            echo "未检测到 uvx，正在安装 uv..."
+            echo "uvx not detected, installing uv..."
             curl -LsSf https://astral.sh/uv/install.sh | sh
             export PATH="$HOME/.cargo/bin:$PATH"
         else
-            echo "✓ uvx 已安装"
+            echo "✓ uvx installed"
         fi
 
         # Check if specify-cli is installed (use local version if available)
         if command -v specify &> /dev/null; then
-            echo "✓ specify-cli 已安装，使用本地版本"
-            read -p "请输入项目名称: " project_name
+            echo "✓ specify-cli installed, using local version"
+            read -p "Enter project name: " project_name
             specify init "$project_name"
         else
-            echo "使用 uvx 临时运行 spec-kit..."
-            read -p "请输入项目名称: " project_name
+            echo "Using uvx to run spec-kit temporarily..."
+            read -p "Enter project name: " project_name
             uvx --from git+https://github.com/github/spec-kit.git specify init "$project_name"
         fi
 
-        echo "✅ spec-kit 初始化完成！"
-        echo "可用命令: /specify, /plan, /tasks"
+        echo "✅ spec-kit initialization complete!"
+        echo "Available commands: /specify, /plan, /tasks"
         ;;
 
     "legacy"|"brownfield")
         # Check if npm is installed
         if ! command -v npm &> /dev/null; then
-            echo "❌ 错误: 需要 Node.js 和 npm"
-            echo "请先安装: https://nodejs.org/"
+            echo "❌ Error: Node.js and npm required"
+            echo "Please install first: https://nodejs.org/"
             exit 1
         fi
 
         # Check if OpenSpec is installed
         if ! command -v openspec &> /dev/null; then
-            echo "未检测到 OpenSpec，正在安装..."
+            echo "OpenSpec not detected, installing..."
             npm install -g @fission-ai/openspec@latest
         else
-            echo "✓ OpenSpec 已安装"
+            echo "✓ OpenSpec installed"
         fi
 
         # Check if project is already initialized
         if [ ! -d "openspec" ]; then
             openspec init
-            echo "✅ OpenSpec 初始化完成！"
+            echo "✅ OpenSpec initialization complete!"
         else
-            echo "✓ 项目已初始化 OpenSpec"
+            echo "✓ Project already initialized with OpenSpec"
         fi
         ;;
 
     *)
-        echo "❌ 未知的项目阶段: $PHASE"
+        echo "❌ Unknown project phase: $PHASE"
         exit 1
         ;;
 esac
 
-echo "✅ 初始化完成！框架已自动创建 commands 和目录结构。"
+echo "✅ Initialization complete! Framework has automatically created commands and directory structure."

@@ -38,9 +38,9 @@ This will automatically:
 1. Detect your project as "legacy"
 2. Install and initialize OpenSpec (if needed)
 3. **Analyze your codebase and generate baseline specifications** (New in v1.1.0)
-   - `openspec/specs/project.md` - 项目概述（含 TODO）
-   - `openspec/specs/architecture.md` - 架构文档（含 TODO）
-   - `openspec/specs/features/` - 功能目录
+   - `openspec/specs/project.md` - Project overview (with TODOs)
+   - `openspec/specs/architecture.md` - Architecture documentation (with TODOs)
+   - `openspec/specs/features/` - Features directory
 4. Guide you through refining the specifications in Claude Code
 
 ## Manual Step-by-Step

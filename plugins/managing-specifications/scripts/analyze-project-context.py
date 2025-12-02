@@ -190,17 +190,17 @@ def infer_architecture_pattern(structure):
 
     patterns = []
     if any('model' in d.lower() for d in source_dirs):
-        patterns.append("可能使用 MVC 或分层架构")
+        patterns.append("Likely uses MVC or layered architecture")
     if any('controller' in d.lower() for d in source_dirs):
-        patterns.append("检测到 Controller 层")
+        patterns.append("Detected Controller layer")
     if any('service' in d.lower() for d in source_dirs):
-        patterns.append("检测到 Service 层")
+        patterns.append("Detected Service layer")
     if any('repository' in d.lower() or 'dao' in d.lower() for d in source_dirs):
-        patterns.append("检测到 Repository/DAO 层")
+        patterns.append("Detected Repository/DAO layer")
 
     if patterns:
         return '\n'.join(f"- {p}" for p in patterns)
-    return "- [待分析] 请根据代码结构补充架构模式"
+    return "- [To be analyzed] Please add architecture patterns based on code structure"
 
 def format_tech_stack(project_types, dependencies):
     """Format detected technologies"""
@@ -220,7 +220,7 @@ def format_tech_stack(project_types, dependencies):
         if dep_file in frameworks:
             lines.append(f"  - {frameworks[dep_file]}: `{dep_file}`")
 
-    return '\n'.join(lines) if lines else "- [待检测] 请补充技术栈信息"
+    return '\n'.join(lines) if lines else "- [To be detected] Please add tech stack information"
 
 def format_directory_tree(structure):
     """Format directory structure as a tree"""
@@ -231,33 +231,33 @@ def format_directory_tree(structure):
             lines.append(f"{category_name}:")
             for d in dirs:
                 lines.append(f"  {d}/")
-    return '\n'.join(lines) if lines else "[待扫描] 项目目录结构"
+    return '\n'.join(lines) if lines else "[To be scanned] Project directory structure"
 
 def format_api_endpoints(endpoints):
     """Format API endpoints"""
     if not endpoints:
-        return "[未检测到] 请补充 API 端点信息"
+        return "[Not detected] Please add API endpoint information"
 
-    lines = ["**检测到的路由文件**:"]
+    lines = ["**Detected route files**:"]
     for endpoint in endpoints[:10]:  # Limit to first 10
         lines.append(f"- `{endpoint['file']}`")
 
     if len(endpoints) > 10:
-        lines.append(f"- ... 以及其他 {len(endpoints) - 10} 个文件")
+        lines.append(f"- ... and {len(endpoints) - 10} more files")
 
     return '\n'.join(lines)
 
 def format_database_schemas(schemas):
     """Format database schema files"""
     if not schemas:
-        return "[未检测到] 请补充数据库设计信息"
+        return "[Not detected] Please add database design information"
 
-    lines = ["**检测到的 Schema 文件**:"]
+    lines = ["**Detected Schema files**:"]
     for schema in schemas[:5]:
         lines.append(f"- `{schema}`")
 
     if len(schemas) > 5:
-        lines.append(f"- ... 以及其他 {len(schemas) - 5} 个文件")
+        lines.append(f"- ... and {len(schemas) - 5} more files")
 
     return '\n'.join(lines)
 
@@ -265,11 +265,11 @@ def format_system_components(structure):
     """Format system components"""
     source_dirs = structure.get('source_dirs', [])
     if not source_dirs:
-        return "[待识别] 请补充系统组件说明"
+        return "[To be identified] Please add system component descriptions"
 
     lines = []
     for src_dir in source_dirs:
-        lines.append(f"- **`{src_dir}/`**: [TODO] 补充组件职责说明")
+        lines.append(f"- **`{src_dir}/`**: [TODO] Add component responsibility description")
 
     return '\n'.join(lines)
 
@@ -294,7 +294,7 @@ def generate_baseline_specs(analysis, output_dir, root_path):
         'SYSTEM_COMPONENTS': format_system_components(analysis['structure']),
         'TECH_STACK_DETAILS': format_tech_stack(analysis['project_types'], analysis['dependencies']),
         'DATA_STORAGE': format_database_schemas(analysis['database_schemas']),
-        'SECURITY_CONSIDERATIONS': "- [TODO] 补充认证授权机制\n- [TODO] 补充数据加密策略\n- [TODO] 补充安全审计方案"
+        'SECURITY_CONSIDERATIONS': "- [TODO] Add authentication and authorization mechanisms\n- [TODO] Add data encryption strategies\n- [TODO] Add security audit plans"
     }
 
     # Generate project.md from template
@@ -358,7 +358,7 @@ Detected technologies: {', '.join(analysis['project_types'])}
 
 ## Design Patterns
 
-[TODO] 补充架构模式
+[TODO] Add architecture patterns
 """)
 
     # Create features directory with README
@@ -369,23 +369,23 @@ Detected technologies: {', '.join(analysis['project_types'])}
     with open(readme, 'w') as f:
         f.write("""# Features
 
-此目录用于记录系统的各个功能特性。
+This directory is used to document various system features.
 
-## 使用方法
+## Usage
 
-为每个主要功能创建一个独立的 Markdown 文件，例如 `user-authentication.md`。
+Create a separate Markdown file for each major feature, e.g., `user-authentication.md`.
 
-可以使用 `../templates/feature.md.template` 作为模板。
+You can use `../templates/feature.md.template` as a template.
 
-## 下一步
+## Next Steps
 
-1. 识别系统的核心功能模块
-2. 为每个功能创建对应的文档文件
-3. 与团队协作完善功能描述
+1. Identify core feature modules of the system
+2. Create corresponding documentation files for each feature
+3. Collaborate with the team to refine feature descriptions
 
 ---
 
-*提示：可以让 Claude 帮助你识别和记录功能特性*
+*Tip: You can ask Claude to help identify and document features*
 """)
 
     # Save generation metadata
@@ -440,37 +440,37 @@ def main():
 
     # Check if OpenSpec is initialized
     if not (root_path / 'openspec').exists():
-        print("⚠️  项目尚未初始化 OpenSpec")
-        print("\n请先运行初始化命令：")
+        print("⚠️  Project not yet initialized with OpenSpec")
+        print("\nPlease run initialization command first:")
         print("  bash scripts/adopt-sdd.sh")
-        print("\n或手动初始化：")
+        print("\nOr initialize manually:")
         print("  npm install -g @fission-ai/openspec@latest && openspec init")
         sys.exit(1)
 
-    print("=== 分析项目上下文 ===\n")
+    print("=== Analyzing Project Context ===\n")
 
     # Perform analysis
-    print("1. 检测项目类型...")
+    print("1. Detecting project type...")
     project_types = detect_project_type(root_path)
-    print(f"   发现: {', '.join(project_types) if project_types else 'Unknown'}")
+    print(f"   Found: {', '.join(project_types) if project_types else 'Unknown'}")
 
-    print("2. 分析目录结构...")
+    print("2. Analyzing directory structure...")
     structure = analyze_directory_structure(root_path)
 
-    print("3. 查找 API 模式...")
+    print("3. Finding API patterns...")
     api_endpoints = find_api_endpoints(root_path)
-    print(f"   发现 {len(api_endpoints)} 个潜在的路由文件")
+    print(f"   Found {len(api_endpoints)} potential route files")
 
-    print("4. 定位数据库模式...")
+    print("4. Locating database schemas...")
     schemas = find_database_schemas(root_path)
-    print(f"   发现 {len(schemas)} 个模式文件")
+    print(f"   Found {len(schemas)} schema files")
 
-    print("5. 提取依赖...")
+    print("5. Extracting dependencies...")
     dependencies = extract_dependencies(root_path, project_types)
 
-    print("6. 扫描现有文档...")
+    print("6. Scanning existing documentation...")
     existing_docs = scan_existing_docs(root_path)
-    print(f"   发现 {len(existing_docs)} 个文档文件")
+    print(f"   Found {len(existing_docs)} documentation files")
 
     # Compile analysis
     analysis = {
@@ -490,49 +490,49 @@ def main():
     with open(output_path, 'w') as f:
         json.dump(analysis, f, indent=2)
 
-    print(f"\n✅ 项目上下文已保存到: {output_path}")
+    print(f"\n✅ Project context saved to: {output_path}")
 
     # Generate baseline specs if requested
     if args.generate_specs:
-        print("\n7. 生成基准规范文件...")
+        print("\n7. Generating baseline specification files...")
         specs_dir = root_path / 'openspec' / 'specs'
         generated_files = generate_baseline_specs(analysis, specs_dir, root_path)
 
-        print("   ✅ 已生成基准规范文件：")
+        print("   ✅ Generated baseline spec files:")
         print(f"      - {generated_files['project_md']}")
         print(f"      - {generated_files['architecture_md']}")
         print(f"      - {generated_files['features_dir']}/")
         print(f"      - {generated_files['metadata']}")
 
         print("\n" + "="*60)
-        print("✨ 基准规范生成完成")
+        print("✨ Baseline specification generation complete")
         print("="*60)
-        print("\n📝 生成的规范文件包含从代码分析得出的基础信息")
-        print("🔧 请在 Claude Code 中完善标记为 [TODO] 的部分\n")
-        print("建议的后续步骤：")
-        print("\n1️⃣  在 Claude Code 中完善规范：")
+        print("\n📝 Generated spec files contain basic information from code analysis")
+        print("🔧 Please refine sections marked with [TODO] in Claude Code\n")
+        print("Recommended next steps:")
+        print("\n1️⃣  Refine specs in Claude Code:")
         print('   "Please read openspec/specs/project.md and help me')
         print('    complete all [TODO] sections with proper details"')
-        print("\n2️⃣  记录核心功能：")
+        print("\n2️⃣  Document core features:")
         print('   "Help me identify and document the core features')
         print('    in openspec/specs/features/"')
-        print("\n3️⃣  创建第一个变更提案：")
+        print("\n3️⃣  Create first change proposal:")
         print('   "I want to add [FEATURE]. Please create an')
         print('    OpenSpec change proposal"')
     else:
         print("\n" + "="*60)
-        print("下一步：生成基准规范或使用 AI 协作")
+        print("Next steps: Generate baseline specs or collaborate with AI")
         print("="*60)
-        print("\n💡 提示：添加 --generate-specs 参数可自动生成基准规范文件")
-        print("\n在 Claude Code 中运行以下命令之一：")
-        print("\n1️⃣  让 Claude 读取分析结果：")
+        print("\n💡 Tip: Add --generate-specs flag to automatically generate baseline spec files")
+        print("\nRun one of the following commands in Claude Code:")
+        print("\n1️⃣  Have Claude read the analysis results:")
         print(f'   "Please read {output_path} and help me')
         print('    create OpenSpec documentation for this project"')
-        print("\n2️⃣  创建功能提案：")
+        print("\n2️⃣  Create feature proposal:")
         print('   "I want to add [YOUR FEATURE]. Please create an')
         print('    OpenSpec change proposal for this feature"')
 
-    print("\n📚 参考文档: reference/legacy-adoption.md")
+    print("\n📚 Reference documentation: reference/legacy-adoption.md")
     print("="*60)
 
 if __name__ == "__main__":
