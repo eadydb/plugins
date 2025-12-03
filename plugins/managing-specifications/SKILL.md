@@ -1,6 +1,6 @@
 ---
 name: managing-specifications
-description: "Manages specification-driven development with spec-kit and OpenSpec. Use when: starting new projects, creating specifications, adding features to existing codebases, generating specs from legacy code, adopting SDD for legacy projects, or migrating from spec-kit to OpenSpec."
+description: "Manages specification-driven development with spec-kit and OpenSpec. Use when: starting new projects, creating specifications, adding features to existing codebases, generating specs from legacy code, adopting SDD for legacy projects, creating proposals, implementing features, or migrating from spec-kit to OpenSpec. ALWAYS trigger this skill when users mention: '新增提案', '创建提案', '新功能', '添加功能', 'new proposal', 'create proposal', 'new feature', 'add feature' - even in projects without existing SDD setup."
 allowed-tools: Read, Grep, Glob, Bash, Write, Edit
 ---
 
@@ -97,7 +97,35 @@ flowchart TD
 
 **Trigger Condition**: Detection result is "legacy"
 
+**CRITICAL**: When users request to create proposals/add features in a Legacy project, they MUST first adopt SDD. Do NOT attempt to create proposals directly.
+
 **Automated Behavior**:
+
+**Step 0: Handle proposal/feature creation requests**
+
+If user mentions keywords like "新增提案", "创建提案", "新功能", "添加功能", "new proposal", "create proposal", "add feature":
+
+a. **First, explain the situation clearly**:
+   ```
+   I noticed this project doesn't have a specification framework yet (detected as "legacy" phase).
+
+   Before we can create feature proposals, we need to complete a one-time SDD adoption:
+
+   1. ✅ Analyze the codebase and generate baseline specifications
+   2. ✅ Refine the baseline specs (reduce TODOs to < 5)
+   3. ✅ Then you can create feature proposals systematically
+
+   This setup takes about 10-15 minutes and enables structured feature development going forward.
+
+   Shall I start the SDD adoption process now?
+   ```
+
+b. Wait for user confirmation
+
+c. If user agrees, proceed to Step 1 below
+
+**Step 1-5: Standard Legacy Adoption Process**
+
 1. Check if analysis has been run:
    - Look for `.claude/project-context.json`
    - Look for `openspec/specs/project.md`
@@ -118,9 +146,14 @@ flowchart TD
    - Ask for details item by item and update files
    - Ensure business context and architectural decisions are clear
 
-5. Suggest creating feature documentation:
+5. **After refinement is complete** (TODO < 5), inform user:
    ```
-   "Let me help you identify core features and create documentation in openspec/specs/features/"
+   ✅ Great! Baseline specifications are now complete.
+
+   Your project is now ready for systematic feature development!
+   You can create feature proposals using: openspec proposal <feature-name>
+
+   What feature would you like to add?
    ```
 
 **Completion Standard**: Fewer than 5 TODOs in baseline specification files
@@ -452,6 +485,12 @@ See `reference/init-commands.md` for installation commands.
 
 ## Version History
 
+- **v1.2.0**: Enhanced Legacy Project Proposal Handling
+  - Skill now automatically triggers on proposal/feature keywords (新增提案, 创建提案, new proposal, etc.)
+  - Added explicit guidance for Legacy projects requesting proposals
+  - Legacy projects now receive clear explanation before SDD adoption
+  - Improved description to ensure skill triggers even without existing SDD setup
+  - Added keywords: "proposals", "features" to plugin metadata
 - **v1.1.0**: Intelligence Enhancement
   - Added automatic phase detection and transition suggestions
   - Auto-generate baseline specs for Legacy projects

@@ -1,7 +1,7 @@
 {
   "name": "managing-specifications",
-  "version": "1.1.0",
-  "description": "Intelligent specification-driven development with automatic phase detection, baseline spec generation for legacy projects, and smart workflow guidance.",
+  "version": "1.2.0",
+  "description": "Intelligent specification-driven development with automatic phase detection, baseline spec generation for legacy projects, smart workflow guidance, and seamless proposal creation. Handles greenfield (spec-kit), legacy (auto-analysis + OpenSpec), and brownfield (OpenSpec) projects. Automatically triggered when creating proposals or adding features.",
   "author": {
     "name": "eadydb"
   },
@@ -14,7 +14,9 @@
     "openspec",
     "sdd",
     "workflow",
-    "development"
+    "development",
+    "proposals",
+    "features"
   ],
   "skills": [
     {
