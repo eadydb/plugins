@@ -4,23 +4,22 @@
     "name": "eadydb",
     "email": "dengbin1201@gmail.com"
   },
-  "description": "Essential development workflow tools including specification-driven development, code quality management, and project automation utilities",
-  "version": "1.0.0",
+  "metadata": {
+    "description": "Essential development workflow tools including specification-driven development, code quality management, and project automation utilities",
+    "version": "1.2.0"
+  },
   "homepage": "https://github.com/eadydb/plugins",
   "repository": "https://github.com/eadydb/plugins",
   "license": "MIT",
   "plugins": [
     {
-      "name": "managing-specifications",
-      "source": "./plugins/managing-specifications",
-      "description": "Intelligent SDD workflow with automatic phase detection and baseline spec generation",
-      "version": "1.1.0",
-      "author": {
-        "name": "eadydb"
-      },
-      "license": "MIT",
-      "keywords": ["specifications", "spec-kit", "openspec", "sdd", "workflow"],
-      "category": "Development Workflow"
+      "name": "dev-workflow-tools",
+      "description": "Collection of development workflow tools including SDD management, code quality, and project automation",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/managing-specifications"
+      ]
     }
   ]
 }
